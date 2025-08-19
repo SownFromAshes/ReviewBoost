@@ -12,6 +12,8 @@ import { QRCodes } from './pages/QRCodes';
 import { Settings } from './pages/Settings';
 import { Admin } from './pages/Admin';
 import { RedirectPage } from './pages/RedirectPage';
+import { Pricing } from './pages/Pricing';
+import { Success } from './pages/Success';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/success" element={<Success />} />
             <Route path="/r/:shortCode" element={<RedirectPage />} />
             <Route
               path="/dashboard"

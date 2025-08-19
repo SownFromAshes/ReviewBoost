@@ -140,7 +140,7 @@ export const Landing: React.FC = () => {
       </div>
 
       {/* Pricing Section */}
-      <div className="bg-gray-50 py-12">
+      <div id="pricing" className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
@@ -157,10 +157,10 @@ export const Landing: React.FC = () => {
                 <div className="text-center">
                   <h3 className="text-2xl font-semibold text-gray-900">Pro Plan</h3>
                   <div className="mt-4 flex items-baseline justify-center">
-                    <span className="text-5xl font-extrabold text-gray-900">$29</span>
+                    <span className="text-5xl font-extrabold text-gray-900">$29.99</span>
                     <span className="ml-1 text-xl text-gray-500">/month</span>
                   </div>
-                  <p className="mt-4 text-lg text-gray-500">7-day free trial included</p>
+                  <p className="mt-4 text-lg text-gray-500">ReviewBoostSC Plan</p>
                 </div>
                 <div className="mt-8">
                   <ul className="space-y-4">

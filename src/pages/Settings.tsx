@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { SubscriptionStatus } from '../components/SubscriptionStatus';
 import { CreditCard, Building, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -110,57 +111,27 @@ export const Settings: React.FC = () => {
           </form>
         </div>
 
-        {/* Billing Settings */}
+        {/* Subscription Status */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <CreditCard className="h-5 w-5 mr-2" />
-              Billing & Subscription
+              Subscription Status
             </h3>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900">Current Plan</h4>
-                  <p className="text-sm text-gray-500">
-                    {profile?.subscription_status === 'trial' ? 'Free Trial' : 'Pro Plan'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {profile?.subscription_status === 'trial' ? '$0/month' : '$29/month'}
-                  </p>
-                  {profile?.trial_ends_at && profile.subscription_status === 'trial' && (
-                    <p className="text-sm text-gray-500">
-                      Trial ends {new Date(profile.trial_ends_at).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Features</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Unlimited QR codes</li>
-                  <li>• Advanced analytics</li>
-                  <li>• Custom short links</li>
-                  <li>• Priority support</li>
-                </ul>
-              </div>
-
-              <div className="border-t pt-4">
-                <button
-                  onClick={openBillingPortal}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <Building className="h-4 w-4 mr-2" />
-                  Manage Billing
-                </button>
-                <p className="mt-2 text-sm text-gray-500">
-                  Update payment method, view invoices, and manage your subscription
-                </p>
-              </div>
+            <SubscriptionStatus />
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button
+                onClick={openBillingPortal}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Building className="h-4 w-4 mr-2" />
+                Manage Billing
+              </button>
+              <p className="mt-2 text-sm text-gray-500">
+                Update payment method, view invoices, and manage your subscription
+              </p>
             </div>
           </div>
         </div>

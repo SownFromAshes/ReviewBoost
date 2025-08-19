@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../hooks/useSubscription';
 import { QrCode, Settings, Users, LogOut, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
@@ -9,6 +10,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, profile, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const location = useLocation();
 
   if (!user) {
@@ -65,7 +67,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{profile?.company_name || profile?.email}</span>
+              <div className="text-right">
+                <div className="text-sm text-gray-600">{profile?.company_name || profile?.email}</div>
+                {subscription?.product_name && (
+                  <div className="text-xs text-gray-500">{subscription.product_name}</div>
+                )}
+              </div>
               <button
                 onClick={handleSignOut}
                 className="inline-flex items-center space-x-1 text-gray-500 hover:text-gray-700"

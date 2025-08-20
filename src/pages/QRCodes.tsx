@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Download, ExternalLink, Plus, QrCode as QrCodeIcon } from 'lucide-react';
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
-import { useAuth } from '../contexts/AuthContext'; // Added import
+import { useAuth } from '../contexts/AuthContext';
 
 interface QRCodeData {
   id: string;
@@ -22,8 +22,10 @@ export const QRCodes: React.FC = () => {
     title: '',
     googleBusinessUrl: '',
   });
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { user } = useAuth(); // Added useAuth hook
+  // The canvasRef is no longer strictly needed for downloadQRCode with toDataURL,
+  // but keeping it for potential future use or if you have other canvas needs.
+  const canvasRef = useRef<HTMLCanvasElement>(null); 
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchQRCodes();
@@ -58,7 +60,7 @@ export const QRCodes: React.FC = () => {
   const handleCreateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) { // Added user check
+    if (!user) {
       toast.error('You must be logged in to create QR codes.');
       return;
     }
@@ -70,7 +72,7 @@ export const QRCodes: React.FC = () => {
       const { error } = await supabase
         .from('qr_codes')
         .insert({
-          user_id: user.id, // Added user_id
+          user_id: user.id,
           title: formData.title,
           google_business_url: formData.googleBusinessUrl,
           short_code: shortCode,
@@ -92,24 +94,22 @@ export const QRCodes: React.FC = () => {
     try {
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
       console.log('Generating QR code for URL:', trackingUrl); // Debugging log
-      const canvas = canvasRef.current;
       
-      if (canvas) {
-        await QRCode.toCanvas(canvas, trackingUrl, {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#ffffff',
-          },
-        });
+      // Use QRCode.toDataURL directly to generate the image data
+      const dataUrl = await QRCode.toDataURL(trackingUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      });
 
-        // Convert canvas to download link
-        const link = document.createElement('a');
-        link.download = `${qrCodeData.title}-qr-code.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-      }
+      // Convert data URL to download link
+      const link = document.createElement('a');
+      link.download = `${qrCodeData.title}-qr-code.png`;
+      link.href = dataUrl;
+      link.click();
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast.error('Failed to download QR code');

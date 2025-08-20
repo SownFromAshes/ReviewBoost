@@ -45,7 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <QrCode className="h-8 w-8 text-blue-600" />
                 <span className="font-bold text-xl text-gray-900">ReviewBoost</span>
               </Link>
-              <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
+              <div className="flex sm:ml-8 sm:space-x-8">
                 {navigation.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.href;

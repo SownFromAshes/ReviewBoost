@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Download, ExternalLink, Plus, QrCode as QrCodeIcon } from 'lucide-react';
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext'; // Added import
 
 interface QRCodeData {
   id: string;
@@ -22,6 +23,7 @@ export const QRCodes: React.FC = () => {
     googleBusinessUrl: '',
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { user } = useAuth(); // Added useAuth hook
 
   useEffect(() => {
     fetchQRCodes();
@@ -56,6 +58,11 @@ export const QRCodes: React.FC = () => {
   const handleCreateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) { // Added user check
+      toast.error('You must be logged in to create QR codes.');
+      return;
+    }
+
     try {
       const shortCode = generateShortCode();
       const trackingUrl = `${window.location.origin}/r/${shortCode}`;
@@ -63,6 +70,7 @@ export const QRCodes: React.FC = () => {
       const { error } = await supabase
         .from('qr_codes')
         .insert({
+          user_id: user.id, // Added user_id
           title: formData.title,
           google_business_url: formData.googleBusinessUrl,
           short_code: shortCode,

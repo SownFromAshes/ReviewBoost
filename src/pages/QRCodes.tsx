@@ -91,6 +91,7 @@ export const QRCodes: React.FC = () => {
   const downloadQRCode = async (qrCodeData: QRCodeData) => {
     try {
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
+      console.log('Generating QR code for URL:', trackingUrl); // Debugging log
       const canvas = canvasRef.current;
       
       if (canvas) {

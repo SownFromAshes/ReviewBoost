@@ -27,7 +27,7 @@ export const Landing: React.FC = () => {
               </Link>
               <Link
                 to="/signup"
-                className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-cyan-400 rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
+                className="hidden md:inline-flex whitespace-nowrap items-center justify-center px-4 py-2 border border-cyan-400 rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
               >
                 Start Free Trial
               </Link>

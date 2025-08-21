@@ -19,7 +19,8 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="App">
+        {/* Applied global dark background and text styles here */}
+        <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 font-sans antialiased">
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

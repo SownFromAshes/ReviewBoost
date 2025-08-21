@@ -71,14 +71,14 @@ export const Dashboard: React.FC = () => {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 font-sans antialiased p-6">
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-white sm:text-3xl sm:truncate">
             Dashboard
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-300">
             Welcome back, {profile?.company_name || 'there'}!
           </p>
         </div>
@@ -86,20 +86,20 @@ export const Dashboard: React.FC = () => {
 
       {/* Trial Status */}
       {profile?.subscription_status === 'trial' && (
-        <div className="rounded-md bg-yellow-50 p-4">
+        <div className="rounded-md bg-yellow-900/30 border border-yellow-700 p-4">
           <div className="flex">
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-medium text-yellow-300">
                 Free Trial Active
               </h3>
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-yellow-400">
                 {trialDaysRemaining > 0 
                   ? `${trialDaysRemaining} days remaining in your free trial.`
                   : 'Your trial has expired.'
                 } Upgrade to continue using ReviewBoost.
               </p>
             </div>
-            <button className="ml-3 text-sm font-medium text-yellow-800 hover:text-yellow-900">
+            <button className="ml-3 text-sm font-medium text-yellow-300 hover:text-yellow-200">
               Upgrade Now
             </button>
           </div>
@@ -111,7 +111,7 @@ export const Dashboard: React.FC = () => {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
+            <div key={stat.name} className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -121,10 +121,10 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-gray-300 truncate">
                         {stat.name}
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg font-medium text-white">
                         {stat.value}
                       </dd>
                     </dl>
@@ -137,49 +137,49 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent QR Codes */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Recent QR Codes</h3>
+      <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800">
+        <div className="px-6 py-4 border-b border-gray-700">
+          <h3 className="text-lg font-medium text-white">Recent QR Codes</h3>
         </div>
         <div className="px-6 py-4">
           {loading ? (
             <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
             </div>
           ) : qrCodes.length === 0 ? (
             <div className="text-center py-8">
               <QrCode className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No QR codes yet</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-sm font-medium text-white">No QR codes yet</h3>
+              <p className="mt-1 text-sm text-gray-300">
                 Get started by creating your first QR code.
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-900/60">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Title
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Scans
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Created
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-transparent divide-y divide-gray-700">
                   {qrCodes.map((code) => (
                     <tr key={code.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                         {code.title}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {code.scan_count}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {new Date(code.created_at).toLocaleDateString()}
                       </td>
                     </tr>

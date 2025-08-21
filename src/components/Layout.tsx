@@ -36,14 +36,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen"> {/* Removed bg-gray-50 here */}
+      <nav className="backdrop-blur-md bg-black/40 border-b border-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/dashboard" className="flex items-center space-x-2">
-                <QrCode className="h-8 w-8 text-blue-600" />
-                <span className="font-bold text-xl text-gray-900">ReviewBoost</span>
+                <QrCode className="h-8 w-8 text-cyan-400" /> {/* Updated text color */}
+                <span className="font-bold text-xl text-white">ReviewBoost</span> {/* Updated text color */}
               </Link>
               <div className="flex sm:ml-8 sm:space-x-8">
                 {navigation.map((item) => {
@@ -55,8 +55,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       to={item.href}
                       className={`inline-flex items-center space-x-1 px-1 pt-1 border-b-2 text-sm font-medium ${
                         isActive
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                          ? 'border-cyan-400 text-cyan-400' // Updated active link colors
+                          : 'border-transparent text-gray-300 hover:border-gray-700 hover:text-cyan-400' // Updated inactive link colors
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -68,14 +68,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <div className="text-sm text-gray-600">{profile?.company_name || profile?.email}</div>
+                <div className="text-sm text-gray-300">{profile?.company_name || profile?.email}</div> {/* Updated text color */}
                 {subscription?.product_name && (
-                  <div className="text-xs text-gray-500">{subscription.product_name}</div>
+                  <div className="text-xs text-gray-400">{subscription.product_name}</div> {/* Updated text color */}
                 )}
               </div>
               <button
                 onClick={handleSignOut}
-                className="inline-flex items-center space-x-1 text-gray-500 hover:text-gray-700"
+                className="inline-flex items-center space-x-1 text-gray-300 hover:text-cyan-400" // Updated text color
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:block">Sign out</span>

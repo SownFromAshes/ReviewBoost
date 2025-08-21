@@ -4,9 +4,9 @@ import { QrCode, BarChart3, Shield, Zap, Check } from 'lucide-react';
 
 export const Landing: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 font-sans antialiased">
       {/* Header */}
-      <header className="backdrop-blur-md bg-black/40 border-b border-gray-800 shadow-lg">
+      <header className="backdrop-blur-md bg-black/40 border-b border-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4 md:justify-start md:space-x-8">
             <div className="flex justify-start lg:w-0 lg:flex-1">
@@ -17,10 +17,11 @@ export const Landing: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="md:flex items-center justify-end md:flex-1 lg:w-0 space-x-3">
+            {/* Reworked header buttons for mobile responsiveness */}
+            <div className="flex flex-1 items-center justify-end space-x-3 md:flex-1 md:space-x-4 lg:w-0">
               <Link
                 to="/login"
-                className="whitespace-nowrap text-base font-medium text-gray-300 hover:text-cyan-400 transition"
+                className="whitespace-nowrap text-base font-medium text-gray-300 hover:text-cyan-400 transition py-2 px-3 rounded-xl"
               >
                 Sign in
               </Link>
@@ -50,16 +51,17 @@ export const Landing: React.FC = () => {
                 <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-300 sm:max-w-xl sm:mx-auto lg:mx-0">
                   Effortlessly generate QR codes and short links that drive Google Business reviews. Monitor performance and improve customer engagement with advanced analytics.
                 </p>
-                <div className="mt-6 sm:flex sm:justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
+                {/* Reworked hero buttons to stack on mobile and become a row on larger screens */}
+                <div className="mt-6 flex flex-col items-center justify-center sm:flex-row lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
                   <Link
                     to="/signup"
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl text-center bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
                   >
                     Start 7-Day Free Trial
                   </Link>
                   <Link
                     to="/login"
-                    className="px-6 py-3 rounded-xl border border-cyan-400 text-cyan-400 font-semibold bg-black/40 hover:bg-black/60 transition"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl text-center border border-cyan-400 text-cyan-400 font-semibold bg-black/40 hover:bg-black/60 transition"
                   >
                     Sign In
                   </Link>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, ExternalLink, Plus, QrCode as QrCodeIcon } from 'lucide-react';
+import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash } from 'lucide-react'; // Added Trash icon
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,8 +22,6 @@ export const QRCodes: React.FC = () => {
     title: '',
     googleBusinessUrl: '',
   });
-  // The canvasRef is no longer strictly needed for downloadQRCode with toDataURL,
-  // but keeping it for potential future use or if you have other canvas needs.
   const canvasRef = useRef<HTMLCanvasElement>(null); 
   const { user } = useAuth();
 
@@ -93,9 +91,8 @@ export const QRCodes: React.FC = () => {
   const downloadQRCode = async (qrCodeData: QRCodeData) => {
     try {
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
-      console.log('Generating QR code for URL:', trackingUrl); // Debugging log
+      console.log('Generating QR code for URL:', trackingUrl);
       
-      // Use QRCode.toDataURL directly to generate the image data
       const dataUrl = await QRCode.toDataURL(trackingUrl, {
         width: 300,
         margin: 2,
@@ -105,7 +102,6 @@ export const QRCodes: React.FC = () => {
         },
       });
 
-      // Convert data URL to download link
       const link = document.createElement('a');
       link.download = `${qrCodeData.title}-qr-code.png`;
       link.href = dataUrl;
@@ -113,6 +109,27 @@ export const QRCodes: React.FC = () => {
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast.error('Failed to download QR code');
+    }
+  };
+
+  const handleDeleteQRCode = async (qrCodeId: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('qr_codes')
+        .delete()
+        .eq('id', qrCodeId);
+
+      if (error) throw error;
+
+      toast.success(`QR code "${title}" deleted successfully!`);
+      fetchQRCodes(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      toast.error('Failed to delete QR code');
     }
   };
 
@@ -256,6 +273,13 @@ export const QRCodes: React.FC = () => {
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Test
                   </a>
+                  <button // Delete button added
+                    onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>

@@ -53,10 +53,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`inline-flex items-center space-x-1 px-1 pt-1 border-b-2 text-sm font-medium ${
+                      // Updated active/inactive link styles for a more professional look
+                      className={`inline-flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
                         isActive
-                          ? 'border-cyan-400 text-cyan-400'
-                          : 'border-transparent text-gray-300 hover:border-gray-700 hover:text-cyan-400'
+                          ? 'bg-gray-800 text-cyan-400' // Active link: subtle dark background, cyan text
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-cyan-400' // Inactive link: gray text, hover to dark background and cyan text
                       }`}
                     >
                       <Icon className="h-4 w-4" />

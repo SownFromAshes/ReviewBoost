@@ -136,27 +136,27 @@ export const QRCodes: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 font-sans antialiased p-6">
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-white sm:text-3xl sm:truncate">
             QR Codes
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-300">
             Manage your review QR codes and tracking links
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
           <button
             onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create QR Code
@@ -166,11 +166,11 @@ export const QRCodes: React.FC = () => {
 
       {/* Create Form */}
       {showCreateForm && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Create New QR Code</h3>
+        <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-6">
+          <h3 className="text-lg font-medium text-white mb-4">Create New QR Code</h3>
           <form onSubmit={handleCreateQRCode} className="space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-300">
                 Title
               </label>
               <input
@@ -179,12 +179,12 @@ export const QRCodes: React.FC = () => {
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                 placeholder="e.g., Main Location Reviews"
               />
             </div>
             <div>
-              <label htmlFor="googleBusinessUrl" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="googleBusinessUrl" className="block text-sm font-medium text-gray-300">
                 Google Business Review URL
               </label>
               <input
@@ -193,7 +193,7 @@ export const QRCodes: React.FC = () => {
                 required
                 value={formData.googleBusinessUrl}
                 onChange={(e) => setFormData({ ...formData, googleBusinessUrl: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                 placeholder="https://g.page/your-business/review"
               />
             </div>
@@ -201,13 +201,13 @@ export const QRCodes: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Create QR Code
               </button>
@@ -220,14 +220,14 @@ export const QRCodes: React.FC = () => {
       {qrCodes.length === 0 ? (
         <div className="text-center py-12">
           <QrCodeIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No QR codes yet</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-2 text-sm font-medium text-white">No QR codes yet</h3>
+          <p className="mt-1 text-sm text-gray-300">
             Get started by creating your first review QR code.
           </p>
           <div className="mt-6">
             <button
               onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create QR Code
@@ -237,29 +237,29 @@ export const QRCodes: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {qrCodes.map((qrCode) => (
-            <div key={qrCode.id} className="bg-white overflow-hidden shadow rounded-lg">
+            <div key={qrCode.id} className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl hover:border-cyan-500 transition">
               <div className="p-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900 truncate">
+                  <h3 className="text-lg font-medium text-white truncate">
                     {qrCode.title}
                   </h3>
-                  <QrCodeIcon className="h-6 w-6 text-gray-400" />
+                  <QrCodeIcon className="h-6 w-6 text-cyan-400" />
                 </div>
-                <div className="mt-2 flex items-center text-sm text-gray-500">
+                <div className="mt-2 flex items-center text-sm text-gray-300">
                   <span className="truncate">
                     {window.location.origin}/r/{qrCode.short_code}
                   </span>
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Total Scans</span>
-                    <span className="font-medium text-gray-900">{qrCode.scan_count}</span>
+                    <span className="text-gray-300">Total Scans</span>
+                    <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
                 </div>
                 <div className="mt-6 flex space-x-3">
                   <button
                     onClick={() => downloadQRCode(qrCode)}
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download
@@ -268,14 +268,14 @@ export const QRCodes: React.FC = () => {
                     href={`/r/${qrCode.short_code}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Test
                   </a>
                   <button // Delete button added
                     onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Trash className="h-4 w-4 mr-1" />
                     Delete

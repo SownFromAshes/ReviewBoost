@@ -30,26 +30,26 @@ export const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-black px-4 py-12 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-800 p-8 sm:p-10">
         <div>
           <div className="flex justify-center">
             <div className="flex items-center space-x-2">
-              <QrCode className="h-8 w-8 text-blue-600" />
-              <span className="font-bold text-xl text-gray-900">ReviewBoost</span>
+              <QrCode className="h-8 w-8 text-cyan-400 drop-shadow-glow" />
+              <span className="font-extrabold text-xl text-white tracking-wide">ReviewBoost</span>
             </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Start your free trial
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            7 days free, then $29/month
+          <p className="mt-2 text-center text-sm text-gray-400">
+            7 days free, then <span className="text-cyan-400 font-semibold">$29/month</span>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-300">
                 Company Name
               </label>
               <input
@@ -59,12 +59,12 @@ export const Signup: React.FC = () => {
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                 placeholder="Your company name"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                 Email Address
               </label>
               <input
@@ -75,12 +75,12 @@ export const Signup: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                 placeholder="you@company.com"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Password
               </label>
               <input
@@ -91,7 +91,7 @@ export const Signup: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                 placeholder="Create a strong password"
               />
             </div>
@@ -101,16 +101,19 @@ export const Signup: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 shadow-lg transition-all duration-300"
             >
               {loading ? 'Creating account...' : 'Start Free Trial'}
             </button>
           </div>
 
           <div className="text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-400">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link
+                to="/login"
+                className="font-medium text-cyan-400 hover:text-cyan-300 transition"
+              >
                 Sign in
               </Link>
             </span>

@@ -48,25 +48,25 @@ export type Database = {
           scan_count: number;
           created_at: string;
           updated_at: string;
-          // Add new columns here
-          qr_color_dark: string | null; // Added
-          qr_color_light: string | null; // Added
+          qr_color_dark: string | null;
+          qr_color_light: string | null;
+          qr_logo_url: string | null; // Added
         };
         Insert: {
           user_id: string;
           title: string;
           google_business_url: string;
           short_code: string;
-          // Add new columns here
-          qr_color_dark?: string; // Added
-          qr_color_light?: string; // Added
+          qr_color_dark?: string;
+          qr_color_light?: string;
+          qr_logo_url?: string | null; // Added
         };
         Update: {
           title?: string;
           google_business_url?: string;
-          // Add new columns here
-          qr_color_dark?: string | null; // Added
-          qr_color_light?: string | null; // Added
+          qr_color_dark?: string | null;
+          qr_color_light?: string | null;
+          qr_logo_url?: string | null; // Added
         };
       };
     };

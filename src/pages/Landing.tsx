@@ -61,7 +61,7 @@ export const Landing: React.FC = () => {
                   </Link>
                   <Link
                     to="/login"
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl text-center bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl text-center border border-cyan-400 text-cyan-400 font-semibold bg-black/40 hover:bg-black/60 transition"
                   >
                     Sign In
                   </Link>

@@ -22,6 +22,7 @@ export const RedirectPage: React.FC = () => {
         .single();
 
       if (qrError || !qrCode) {
+        console.error('QR code not found or error fetching:', qrError);
         window.location.href = '/';
         return;
       }
@@ -40,6 +41,9 @@ export const RedirectPage: React.FC = () => {
         .from('qr_codes')
         .update({ scan_count: qrCode.scan_count + 1 })
         .eq('id', qrCode.id);
+
+      // Debugging log: Check the URL before redirecting
+      console.log('Attempting to redirect to:', qrCode.google_business_url);
 
       // Redirect to Google Business review page
       window.location.href = qrCode.google_business_url;

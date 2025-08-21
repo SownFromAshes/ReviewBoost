@@ -21,13 +21,13 @@ export const Landing: React.FC = () => {
             <div className="flex flex-1 items-center justify-end space-x-3 md:flex-1 md:space-x-4 lg:w-0">
               <Link
                 to="/login"
-                className="whitespace-nowrap text-base font-medium text-gray-300 hover:text-cyan-400 transition py-2 px-3 rounded-xl"
+                className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-cyan-400 rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
               >
                 Sign in
               </Link>
               <Link
                 to="/signup"
-                className="hidden md:inline-flex whitespace-nowrap items-center justify-center px-4 py-2 border border-cyan-400 rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"
+                className="hidden md:inline-flex whitespace-nowrap text-base font-medium text-gray-300 hover:text-cyan-400 transition py-2 px-3 rounded-xl"
               >
                 Start Free Trial
               </Link>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash } from 'lucide-react'; // Added Trash icon
+import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash } from 'lucide-react';
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +12,9 @@ interface QRCodeData {
   short_code: string;
   scan_count: number;
   created_at: string;
+  // Add new properties for QR code colors
+  qr_color_dark: string | null; // Added
+  qr_color_light: string | null; // Added
 }
 
 export const QRCodes: React.FC = () => {
@@ -21,8 +24,10 @@ export const QRCodes: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     googleBusinessUrl: '',
+    qrColorDark: '#000000', // Default dark color
+    qrColorLight: '#ffffff', // Default light color
   });
-  const canvasRef = useRef<HTMLCanvasElement>(null); 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -57,7 +62,7 @@ export const QRCodes: React.FC = () => {
 
   const handleCreateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('You must be logged in to create QR codes.');
       return;
@@ -65,7 +70,7 @@ export const QRCodes: React.FC = () => {
 
     try {
       const shortCode = generateShortCode();
-      const trackingUrl = `${window.location.origin}/r/${shortCode}`;
+      // const trackingUrl = `${window.location.origin}/r/${shortCode}`; // Not directly used in insert
 
       const { error } = await supabase
         .from('qr_codes')
@@ -74,12 +79,14 @@ export const QRCodes: React.FC = () => {
           title: formData.title,
           google_business_url: formData.googleBusinessUrl,
           short_code: shortCode,
+          qr_color_dark: formData.qrColorDark, // Save dark color
+          qr_color_light: formData.qrColorLight, // Save light color
         });
 
       if (error) throw error;
 
       toast.success('QR code created successfully!');
-      setFormData({ title: '', googleBusinessUrl: '' });
+      setFormData({ title: '', googleBusinessUrl: '', qrColorDark: '#000000', qrColorLight: '#ffffff' }); // Reset form
       setShowCreateForm(false);
       fetchQRCodes();
     } catch (error) {
@@ -92,13 +99,13 @@ export const QRCodes: React.FC = () => {
     try {
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
       console.log('Generating QR code for URL:', trackingUrl);
-      
+
       const dataUrl = await QRCode.toDataURL(trackingUrl, {
         width: 300,
         margin: 2,
         color: {
-          dark: '#000000',
-          light: '#ffffff',
+          dark: qrCodeData.qr_color_dark || '#000000', // Use saved dark color, fallback to black
+          light: qrCodeData.qr_color_light || '#ffffff', // Use saved light color, fallback to white
         },
       });
 
@@ -166,7 +173,7 @@ export const QRCodes: React.FC = () => {
 
       {/* Create Form */}
       {showCreateForm && (
-        <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-6">
+        <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-6 mt-6"> {/* Added mt-6 for spacing */}
           <h3 className="text-lg font-medium text-white mb-4">Create New QR Code</h3>
           <form onSubmit={handleCreateQRCode} className="space-y-4">
             <div>
@@ -197,6 +204,36 @@ export const QRCodes: React.FC = () => {
                 placeholder="https://g.page/your-business/review"
               />
             </div>
+            {/* New color input fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="qrColorDark" className="block text-sm font-medium text-gray-300">
+                  QR Code Foreground Color
+                </label>
+                <input
+                  type="color"
+                  id="qrColorDark"
+                  value={formData.qrColorDark}
+                  onChange={(e) => setFormData({ ...formData, qrColorDark: e.target.value })}
+                  className="mt-1 block w-full h-10 rounded-xl border border-gray-700 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  title="Choose foreground color"
+                />
+              </div>
+              <div>
+                <label htmlFor="qrColorLight" className="block text-sm font-medium text-gray-300">
+                  QR Code Background Color
+                </label>
+                <input
+                  type="color"
+                  id="qrColorLight"
+                  value={formData.qrColorLight}
+                  onChange={(e) => setFormData({ ...formData, qrColorLight: e.target.value })}
+                  className="mt-1 block w-full h-10 rounded-xl border border-gray-700 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  title="Choose background color"
+                />
+              </div>
+            </div>
+            {/* End new color input fields */}
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
@@ -218,7 +255,7 @@ export const QRCodes: React.FC = () => {
 
       {/* QR Codes Grid */}
       {qrCodes.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 mt-6"> {/* Added mt-6 for spacing */}
           <QrCodeIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-white">No QR codes yet</h3>
           <p className="mt-1 text-sm text-gray-300">
@@ -235,7 +272,7 @@ export const QRCodes: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-6"> {/* Added mt-6 for spacing */}
           {qrCodes.map((qrCode) => (
             <div key={qrCode.id} className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl hover:border-cyan-500 transition">
               <div className="p-6">
@@ -273,7 +310,7 @@ export const QRCodes: React.FC = () => {
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Test
                   </a>
-                  <button // Delete button added
+                  <button
                     onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
                     className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
                   >

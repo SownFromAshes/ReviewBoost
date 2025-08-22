@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { BarChart3, QrCode, Users, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Import Link for navigation
 
 interface QRCodeData {
   id: string;
@@ -86,8 +87,8 @@ export const Dashboard: React.FC = () => {
 
       {/* Trial Status */}
       {profile?.subscription_status === 'trial' && (
-        <div className="rounded-md bg-yellow-900/30 border border-yellow-700 p-4">
-          <div className="flex">
+        <div className="rounded-md bg-yellow-900/30 border border-yellow-700 p-4 mb-6">
+          <div className="flex items-center justify-between">
             <div className="flex-1">
               <h3 className="text-sm font-medium text-yellow-300">
                 Free Trial Active
@@ -99,9 +100,12 @@ export const Dashboard: React.FC = () => {
                 } Upgrade to continue using ReviewBoost.
               </p>
             </div>
-            <button className="ml-3 text-sm font-medium text-yellow-300 hover:text-yellow-200">
+            <Link
+              to="/pricing"
+              className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+            >
               Upgrade Now
-            </button>
+            </Link>
           </div>
         </div>
       )}

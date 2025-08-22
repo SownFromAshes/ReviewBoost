@@ -42,7 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
 
-  const showTrialBanner = profile?.subscription_status === 'trial' && trialDaysRemaining > 0;
+  // Show trial banner if profile indicates 'trial' tier and trial days remain
+  const showTrialBanner = profile?.subscription_tier === 'trial' && trialDaysRemaining > 0;
 
   return (
     <div className="min-h-screen">
@@ -80,8 +81,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="hidden sm:flex items-center space-x-4">
               <div className="text-right">
                 <div className="text-sm text-gray-300">{profile?.company_name || profile?.email}</div>
-                {subscription?.product_name && (
-                  <div className="text-xs text-gray-400">{subscription.product_name}</div>
+                {profile?.subscription_tier && (
+                  <div className="text-xs text-gray-400 capitalize">{profile.subscription_tier} Plan</div>
                 )}
               </div>
               <button
@@ -144,8 +145,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-white">{profile?.company_name || profile?.email}</div>
-                {subscription?.product_name && (
-                  <div className="text-sm font-medium text-gray-400">{subscription.product_name}</div>
+                {profile?.subscription_tier && (
+                  <div className="text-sm font-medium text-gray-400 capitalize">{profile.subscription_tier} Plan</div>
                 )}
               </div>
             </div>

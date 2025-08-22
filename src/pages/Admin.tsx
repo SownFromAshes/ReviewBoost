@@ -6,7 +6,8 @@ interface User {
   id: string;
   email: string;
   company_name: string | null;
-  subscription_status: string;
+  subscription_status: string; // This is from stripe_user_subscriptions
+  subscription_tier: string; // This is from profiles
   trial_ends_at: string | null;
   created_at: string;
 }
@@ -21,13 +22,36 @@ export const Admin: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
+      // Fetch profiles and join with stripe_user_subscriptions to get full status
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          email,
+          company_name,
+          created_at,
+          subscription_tier,
+          trial_ends_at,
+          stripe_user_subscriptions (
+            subscription_status
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+
+      // Map the data to the User interface, handling the joined table
+      const mappedUsers: User[] = data.map((profile: any) => ({
+        id: profile.id,
+        email: profile.email,
+        company_name: profile.company_name,
+        subscription_tier: profile.subscription_tier,
+        trial_ends_at: profile.trial_ends_at,
+        subscription_status: profile.stripe_user_subscriptions ? profile.stripe_user_subscriptions.subscription_status : 'N/A',
+        created_at: profile.created_at,
+      }));
+      
+      setUsers(mappedUsers || []);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -38,10 +62,15 @@ export const Admin: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
+      case 'starter':
+      case 'growth':
+      case 'pro':
         return 'bg-green-900/30 text-green-300';
       case 'trial':
+      case 'trialing':
         return 'bg-yellow-900/30 text-yellow-300';
-      case 'cancelled':
+      case 'canceled':
+      case 'free':
         return 'bg-red-900/30 text-red-300';
       default:
         return 'bg-gray-900/30 text-gray-300';
@@ -49,8 +78,9 @@ export const Admin: React.FC = () => {
   };
 
   const totalUsers = users.length;
-  const activeSubscriptions = users.filter(u => u.subscription_status === 'active').length;
-  const trialUsers = users.filter(u => u.subscription_status === 'trial').length;
+  const activeSubscriptions = users.filter(u => u.subscription_tier === 'starter' || u.subscription_tier === 'growth' || u.subscription_tier === 'pro').length;
+  const trialUsers = users.filter(u => u.subscription_tier === 'trial').length;
+  const freeUsers = users.filter(u => u.subscription_tier === 'free').length;
 
   if (loading) {
     return (
@@ -75,7 +105,7 @@ export const Admin: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mt-6">
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
           <div className="p-5">
             <div className="flex items-center">
@@ -100,12 +130,12 @@ export const Admin: React.FC = () => {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Building className="h-8 w-8 text-cyan-400" />
+                <Building className="h-8 w-8 text-green-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-300 truncate">
-                    Active Subscriptions
+                    Paid Subscriptions
                   </dt>
                   <dd className="text-lg font-medium text-white">
                     {activeSubscriptions}
@@ -120,7 +150,7 @@ export const Admin: React.FC = () => {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Calendar className="h-8 w-8 text-cyan-400" />
+                <Calendar className="h-8 w-8 text-yellow-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -135,10 +165,30 @@ export const Admin: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Mail className="h-8 w-8 text-red-400" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-300 truncate">
+                    Free/Canceled Users
+                  </dt>
+                  <dd className="text-lg font-medium text-white">
+                    {freeUsers}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800">
+      <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 mt-6">
         <div className="px-6 py-4 border-b border-gray-700">
           <h3 className="text-lg font-medium text-white">All Users</h3>
         </div>
@@ -153,7 +203,10 @@ export const Admin: React.FC = () => {
                   Company
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Status
+                  Tier
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Stripe Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Trial Ends
@@ -176,6 +229,11 @@ export const Admin: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     {user.company_name || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_tier)}`}>
+                      {user.subscription_tier}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_status)}`}>

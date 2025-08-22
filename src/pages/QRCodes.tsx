@@ -4,6 +4,7 @@ import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, Edit, Search
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../hooks/useSubscription'; // Import useSubscription
 
 interface QRCodeData {
   id: string;
@@ -73,6 +74,8 @@ const qrTemplates: QRTemplates[] = [
   },
 ];
 
+const TRIAL_QR_CODE_LIMIT = 2; // Define the limit for trial users
+
 export const QRCodes: React.FC = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +107,7 @@ export const QRCodes: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { user } = useAuth();
+  const { hasActiveSubscription } = useSubscription(); // Get hasActiveSubscription from useSubscription
 
   useEffect(() => {
     fetchQRCodes();
@@ -155,6 +159,12 @@ export const QRCodes: React.FC = () => {
 
     if (!user) {
       toast.error('You must be logged in to create QR codes.');
+      return;
+    }
+
+    // Trial Limit Enforcement
+    if (!hasActiveSubscription() && qrCodes.length >= TRIAL_QR_CODE_LIMIT) {
+      toast.error(`You've reached your trial limit of ${TRIAL_QR_CODE_LIMIT} QR codes. Upgrade to create unlimited dynamic QR codes!`);
       return;
     }
 
@@ -316,61 +326,34 @@ export const QRCodes: React.FC = () => {
     }
   };
   
-  // Custom modal for confirmation instead of window.confirm
-  const CustomConfirmModal = ({ message, onConfirm, onCancel }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-lg p-6 max-w-sm w-full">
-        <p className="text-gray-200 text-center mb-4">{message}</p>
-        <div className="flex justify-center space-x-4">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium rounded-md border border-gray-700 text-gray-300 hover:bg-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-  
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [qrCodeToDelete, setQrCodeToDelete] = useState<QRCodeData | null>(null);
+  const handleDeleteQRCode = async (qrCodeId: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
 
-  const handleDeleteQRCode = (qrCode: QRCodeData) => {
-    setQrCodeToDelete(qrCode);
-    setShowDeleteConfirm(true);
-  };
-  
-  const confirmDelete = async () => {
-    if (!qrCodeToDelete) return;
-    
     try {
       const { error } = await supabase
         .from('qr_codes')
         .delete()
-        .eq('id', qrCodeToDelete.id);
+        .eq('id', qrCodeId);
 
       if (error) throw error;
 
-      toast.success(`QR code "${qrCodeToDelete.title}" deleted successfully!`);
+      toast.success(`QR code "${title}" deleted successfully!`);
       fetchQRCodes();
     } catch (error) {
       console.error('Error deleting QR code:', error);
       toast.error('Failed to delete QR code');
-    } finally {
-      setShowDeleteConfirm(false);
-      setQrCodeToDelete(null);
     }
   };
 
-
   const openEditForm = (qrCode: QRCodeData) => {
+    // Feature Gating - Dynamic QR Code Editing
+    if (!hasActiveSubscription()) {
+      toast.error('Dynamic QR code editing is a Pro feature. Upgrade your plan to unlock this and more!');
+      return;
+    }
+
     setEditingQRCode(qrCode);
     setEditFormData({
       title: qrCode.title,
@@ -384,6 +367,12 @@ export const QRCodes: React.FC = () => {
   const handleUpdateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingQRCode) return;
+
+    // Feature Gating - Dynamic QR Code Editing
+    if (!hasActiveSubscription()) {
+      toast.error('Dynamic QR code editing is a Pro feature. Upgrade your plan to unlock this and more!');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -526,7 +515,7 @@ export const QRCodes: React.FC = () => {
             {selectedTemplateType === 'wifi' && (
               <>
                 <div className="text-yellow-400 text-sm">
-                  Note: Full Wi-Fi QR code generation requires database schema changes and special handling in the redirect logic. This is a placeholder.
+                  Note: Full Wi-Fi QR code generation is not fully implemented. This would require database schema changes and special handling in the redirect logic.
                 </div>
                 <div>
                   <label htmlFor="wifiSsid" className="block text-sm font-medium text-gray-300">
@@ -576,7 +565,7 @@ export const QRCodes: React.FC = () => {
             {selectedTemplateType === 'social' && (
               <>
                 <div className="text-yellow-400 text-sm">
-                  Note: Full Social Media QR code generation requires database schema changes (e.g., JSONB column for links) and a new landing page component. This is a placeholder.
+                  Note: Full Social Media QR code generation requires database schema changes (e.g., JSONB column for links) and a new landing page component.
                 </div>
                 <div>
                   <label htmlFor="facebookUrl" className="block text-sm font-medium text-gray-300">
@@ -745,15 +734,6 @@ export const QRCodes: React.FC = () => {
         </div>
       )}
       
-      {/* Custom delete confirmation modal */}
-      {showDeleteConfirm && qrCodeToDelete && (
-        <CustomConfirmModal 
-          message={`Are you sure you want to delete "${qrCodeToDelete.title}"? This action cannot be undone.`}
-          onConfirm={confirmDelete}
-          onCancel={() => setShowDeleteConfirm(false)}
-        />
-      )}
-
       {/* QR Codes Grid */}
       {qrCodes.length === 0 ? (
         <div className="text-center py-12 mt-6">
@@ -794,11 +774,10 @@ export const QRCodes: React.FC = () => {
                     <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
                 </div>
-                {/* Button Layout Fix: Removed lg:flex and lg:space-x-3 for a consistent grid */}
-                <div className="mt-6 grid grid-cols-2 gap-2">
+                <div className="mt-6 grid grid-cols-2 gap-2 lg:flex lg:space-x-3">
                   <button
                     onClick={() => downloadQRCode(qrCode)}
-                    className="inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download
@@ -807,21 +786,21 @@ export const QRCodes: React.FC = () => {
                     href={`/r/${qrCode.short_code}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Test
                   </a>
                   <button
                     onClick={() => openEditForm(qrCode)}
-                    className="inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteQRCode(qrCode)}
-                    className="inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
+                    onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Trash className="h-4 w-4 mr-1" />
                     Delete

@@ -4,7 +4,7 @@ import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, Edit, Search
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { useSubscription } from '../hooks/useSubscription'; // Import useSubscription
+import { useSubscription } from '../hooks/useSubscription';
 
 interface QRCodeData {
   id: string;
@@ -74,7 +74,8 @@ const qrTemplates: QRTemplates[] = [
   },
 ];
 
-const TRIAL_QR_CODE_LIMIT = 2; // Define the limit for trial users
+const TRIAL_QR_CODE_LIMIT = 2; // Limit for trial users
+const STARTER_QR_CODE_LIMIT = 2; // Limit for Starter tier users
 
 export const QRCodes: React.FC = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
@@ -106,12 +107,12 @@ export const QRCodes: React.FC = () => {
   });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { user } = useAuth();
-  const { hasActiveSubscription } = useSubscription(); // Get hasActiveSubscription from useSubscription
+  const { user, profile } = useAuth(); // Get profile from AuthContext
+  const { hasActiveSubscription, subscription } = useSubscription(); // Get subscription details
 
   useEffect(() => {
     fetchQRCodes();
-  }, []);
+  }, [profile]); // Refetch QR codes if profile changes (e.g., subscription tier)
 
   const fetchQRCodes = async () => {
     try {
@@ -157,18 +158,26 @@ export const QRCodes: React.FC = () => {
   const handleCreateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
+    if (!user || !profile) {
       toast.error('You must be logged in to create QR codes.');
       return;
     }
 
-    // Trial Limit Enforcement
-    if (!hasActiveSubscription() && qrCodes.length >= TRIAL_QR_CODE_LIMIT) {
+    // Tier-based QR Code Limit Enforcement
+    const currentQrCount = qrCodes.length;
+    if (profile.subscription_tier === 'trial' && currentQrCount >= TRIAL_QR_CODE_LIMIT) {
       toast.error(`You've reached your trial limit of ${TRIAL_QR_CODE_LIMIT} QR codes. Upgrade to create unlimited dynamic QR codes!`);
       return;
     }
+    if (profile.subscription_tier === 'starter' && currentQrCount >= STARTER_QR_CODE_LIMIT) {
+      toast.error(`Your Starter plan limits you to ${STARTER_QR_CODE_LIMIT} QR codes. Upgrade to Growth or Pro for unlimited QR codes!`);
+      return;
+    }
+    // For 'growth' and 'pro' tiers, there's no limit here.
 
     let logoUrl: string | null = null;
+    // Pro/Agency tier can remove watermark, implies they can upload logo without restrictions
+    // For Starter/Growth, logo upload is allowed, but watermark will still apply if Starter.
     if (formData.logoFile) {
       const fileExt = formData.logoFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -277,6 +286,7 @@ export const QRCodes: React.FC = () => {
         canvas.height = qrImage.height;
         ctx.drawImage(qrImage, 0, 0);
 
+        // Draw logo if available
         if (qrCodeData.qr_logo_url) {
           const logoImage = new Image();
           logoImage.src = qrCodeData.qr_logo_url;
@@ -293,6 +303,11 @@ export const QRCodes: React.FC = () => {
             
             ctx.drawImage(logoImage, x, y, logoSize, logoSize);
 
+            // Apply watermark if Starter tier
+            if (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial') {
+              drawWatermark(ctx, qrSize);
+            }
+
             const link = document.createElement('a');
             link.download = `${qrCodeData.title}-qr-code.png`;
             link.href = canvas.toDataURL('image/png');
@@ -301,13 +316,21 @@ export const QRCodes: React.FC = () => {
 
           logoImage.onerror = (err) => {
             console.error('Error loading logo image:', err);
-            toast.error('Failed to load logo image for QR code.');
+            toast.error('Failed to load logo image for QR code. Downloading without logo.');
+            // Fallback to just QR code with watermark if Starter
+            if (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial') {
+              drawWatermark(ctx, qrImage.width);
+            }
             const link = document.createElement('a');
             link.download = `${qrCodeData.title}-qr-code.png`;
             link.href = qrCodeDataUrl;
             link.click();
           };
         } else {
+          // Apply watermark if Starter tier and no logo
+          if (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial') {
+            drawWatermark(ctx, qrImage.width);
+          }
           const link = document.createElement('a');
           link.download = `${qrCodeData.title}-qr-code.png`;
           link.href = qrCodeDataUrl;
@@ -324,6 +347,24 @@ export const QRCodes: React.FC = () => {
       console.error('Error generating QR code:', error);
       toast.error('Failed to download QR code');
     }
+  };
+
+  // Helper function to draw watermark
+  const drawWatermark = (ctx: CanvasRenderingContext2D, qrSize: number) => {
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // Dark semi-transparent text
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const text = 'Powered by ReviewBoost';
+    const textWidth = ctx.measureText(text).width;
+    const padding = 10; // Padding from the bottom
+
+    // Draw a background rectangle for better readability
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Light semi-transparent background
+    ctx.fillRect(0, qrSize - 20 - padding, qrSize, 20 + padding); // Adjust height as needed
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // Darker text for contrast
+    ctx.fillText(text, qrSize / 2, qrSize - padding);
   };
   
   const handleDeleteQRCode = async (qrCodeId: string, title: string) => {
@@ -349,8 +390,9 @@ export const QRCodes: React.FC = () => {
 
   const openEditForm = (qrCode: QRCodeData) => {
     // Feature Gating - Dynamic QR Code Editing
-    if (!hasActiveSubscription()) {
-      toast.error('Dynamic QR code editing is a Pro feature. Upgrade your plan to unlock this and more!');
+    // Only Growth and Pro/Agency tiers can edit dynamic QR codes
+    if (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial' || profile?.subscription_tier === 'free') {
+      toast.error('Dynamic QR code editing is a Growth or Pro feature. Upgrade your plan to unlock this!');
       return;
     }
 
@@ -369,8 +411,9 @@ export const QRCodes: React.FC = () => {
     if (!editingQRCode) return;
 
     // Feature Gating - Dynamic QR Code Editing
-    if (!hasActiveSubscription()) {
-      toast.error('Dynamic QR code editing is a Pro feature. Upgrade your plan to unlock this and more!');
+    // Only Growth and Pro/Agency tiers can edit dynamic QR codes
+    if (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial' || profile?.subscription_tier === 'free') {
+      toast.error('Dynamic QR code editing is a Growth or Pro feature. Upgrade your plan to unlock this!');
       return;
     }
 
@@ -396,6 +439,14 @@ export const QRCodes: React.FC = () => {
   };
 
   const handleSelectTemplate = (template: QRTemplates) => {
+    // Feature Gating - Template Library (Growth and Pro/Agency)
+    // For now, all templates are available, but in future, some might be gated.
+    // For example, 'wifi' and 'social' templates could be Growth/Pro features.
+    // if (template.type !== 'url' && (profile?.subscription_tier === 'starter' || profile?.subscription_tier === 'trial' || profile?.subscription_tier === 'free')) {
+    //   toast.error('This template is a Growth or Pro feature. Upgrade your plan to unlock it!');
+    //   return;
+    // }
+
     setSelectedTemplateType(template.type);
     setFormData(prev => ({
       ...prev,
@@ -410,6 +461,18 @@ export const QRCodes: React.FC = () => {
     }));
     setShowTemplateSelection(false);
     setShowCreateForm(true);
+  };
+
+  // Determine if the "Create QR Code" button should be disabled
+  const canCreateMoreQRCodes = () => {
+    if (!profile) return false; // Should not happen if user is logged in
+    if (profile.subscription_tier === 'trial' && qrCodes.length >= TRIAL_QR_CODE_LIMIT) {
+      return false;
+    }
+    if (profile.subscription_tier === 'starter' && qrCodes.length >= STARTER_QR_CODE_LIMIT) {
+      return false;
+    }
+    return true; // Unlimited for Growth/Pro, or within limits for Trial/Starter
   };
 
   if (loading) {
@@ -435,7 +498,8 @@ export const QRCodes: React.FC = () => {
         <div className="mt-4 flex-shrink-0 w-full md:w-auto md:mt-0 md:ml-4">
           <button
             onClick={() => { setShowTemplateSelection(true); setShowCreateForm(false); setShowEditForm(false); }}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 w-full justify-center"
+            disabled={!canCreateMoreQRCodes()}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create QR Code
@@ -661,6 +725,12 @@ export const QRCodes: React.FC = () => {
                 )}
               </div>
               <p className="mt-1 text-xs text-gray-400">Max 1MB. Recommended: square image with transparent background.</p>
+              {/* White-label branding for Pro/Agency tier */}
+              {profile?.subscription_tier === 'pro' && (
+                <p className="mt-1 text-xs text-green-400">
+                  Pro/Agency plan: Your QR codes will not have the "Powered by ReviewBoost" watermark.
+                </p>
+              )}
             </div>
             {/* End Logo Upload Field */}
             <div className="flex justify-end space-x-3">
@@ -673,7 +743,8 @@ export const QRCodes: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={!canCreateMoreQRCodes()}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create QR Code
               </button>
@@ -745,7 +816,8 @@ export const QRCodes: React.FC = () => {
           <div className="mt-6">
             <button
               onClick={() => setShowTemplateSelection(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+              disabled={!canCreateMoreQRCodes()}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create QR Code
@@ -773,6 +845,17 @@ export const QRCodes: React.FC = () => {
                     <span className="text-gray-300">Total Scans</span>
                     <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
+                  {/* Analytics features for Growth/Pro */}
+                  {profile?.subscription_tier === 'growth' || profile?.subscription_tier === 'pro' ? (
+                    <div className="mt-2 text-xs text-gray-400">
+                      {/* Placeholder for advanced analytics */}
+                      <p>Advanced analytics available (time, location, etc.)</p>
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-xs text-gray-400">
+                      Upgrade for advanced analytics (time, location, etc.)
+                    </div>
+                  )}
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-2">
                   <button

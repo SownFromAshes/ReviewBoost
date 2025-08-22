@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { SubscriptionStatus } from '../components/SubscriptionStatus';
 import { CreditCard, Building, User } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase'; // Import supabase
 
 export const Settings: React.FC = () => {
   const { profile, updateProfile } = useAuth();
@@ -11,6 +12,7 @@ export const Settings: React.FC = () => {
     googleBusinessUrl: profile?.google_business_url || '',
   });
   const [loading, setLoading] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false); // New loading state for billing portal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +31,28 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const openBillingPortal = () => {
-    toast.info('Stripe Customer Portal will be integrated here');
+  const openBillingPortal = async () => {
+    setBillingLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-billing-portal', {
+        body: {}, // No body needed for this function
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No billing portal URL received');
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error);
+      toast.error('Failed to open billing portal. Please try again.');
+    } finally {
+      setBillingLoading(false);
+    }
   };
 
   return (
@@ -124,10 +146,11 @@ export const Settings: React.FC = () => {
             <div className="mt-6 pt-6 border-t border-gray-700">
               <button
                 onClick={openBillingPortal}
-                className="inline-flex items-center px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={billingLoading}
+                className="inline-flex items-center px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Building className="h-4 w-4 mr-2" />
-                Manage Billing
+                {billingLoading ? 'Loading...' : 'Manage Billing'}
               </button>
               <p className="mt-2 text-sm text-gray-400">
                 Update payment method, view invoices, and manage your subscription

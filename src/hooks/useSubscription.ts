@@ -79,7 +79,7 @@ export const useSubscription = () => {
           cancel_at_period_end: false,
           payment_method_brand: null,
           payment_method_last4: null,
-          product_name: profile?.subscription_tier === 'trial' ? 'Trial' : 'Free',
+          product_name: profile?.subscription_tier === 'trial' ? 'Trial' : (profile?.subscription_tier === 'free' ? 'Free' : 'ReviewBoostSC Test'),
           subscription_tier: profile?.subscription_tier || 'free',
           trial_ends_at: profile?.trial_ends_at,
           is_active_subscription: profile?.is_active_subscription || false,

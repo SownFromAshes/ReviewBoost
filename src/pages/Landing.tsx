@@ -15,74 +15,18 @@ import {
   CreditCard // For trust badge
 } from 'lucide-react';
 
-// Replicate product data and feature definitions from stripe-config.ts and Pricing.tsx
-// This avoids circular dependencies and keeps the landing page self-contained for display purposes.
-const products = [
-  {
-    id: 'prod_Starter_ID',
-    priceId: 'price_Starter_Monthly',
-    name: 'Starter',
-    description: 'For solopreneurs & micro-SMBs.',
-    mode: 'subscription',
-    price: 19,
-  },
-  {
-    id: 'prod_Growth_ID',
-    priceId: 'price_Growth_Monthly',
-    name: 'Growth',
-    description: 'Designed for 1–5 location businesses.',
-    mode: 'subscription',
-    price: 49,
-  },
-  {
-    id: 'prod_Pro_ID',
-    priceId: 'price_Pro_Monthly',
-    name: 'Pro / Agency',
-    description: 'For franchises, agencies, or multi-location SMBs.',
-    mode: 'subscription',
-    price: 149,
-  },
+// Import actual product data
+import { products } from '../stripe-config';
+
+// Define features for the product
+const productFeatures = [
+  'Unlimited dynamic QR codes',
+  'Branded QR design (logo, color)',
+  'Google Review linking',
+  'Advanced scan analytics',
+  'Template library',
+  'Priority support',
 ];
-
-const tierFeatures = {
-  Starter: [
-    '2 dynamic QR codes',
-    'Branded QR design (logo, color)',
-    'Google Review linking',
-    'Basic scan analytics',
-    'Email support',
-  ],
-  Growth: [
-    'Unlimited dynamic QR codes',
-    'Advanced analytics (time of day, location of scans)',
-    'Negative review filter (private feedback option)',
-    'Automated monthly performance email',
-    'Template library (restaurants, salons, dentists, gyms, etc.)',
-    'Priority support',
-  ],
-  'Pro / Agency': [
-    'Everything in Growth',
-    'Multi-location dashboards',
-    'Team accounts (staff logins per branch)',
-    'White-label branding (agency re-sell)',
-    'API access / Zapier integration',
-    'Exportable analytics reports',
-  ],
-};
-
-const comparisonFeatures = [
-  { name: 'Dynamic QR Codes', Starter: '2', Growth: 'Unlimited', Pro: 'Unlimited' },
-  { name: 'Branded QR', Starter: true, Growth: true, Pro: true },
-  { name: 'Google Review Linking', Starter: true, Growth: true, Pro: true },
-  { name: 'Analytics', Starter: 'Basic', Growth: 'Advanced', Pro: 'Advanced + Export' },
-  { name: 'Negative Review Capture', Starter: false, Growth: true, Pro: true },
-  { name: 'Templates', Starter: false, Growth: true, Pro: true },
-  { name: 'Multi-location', Starter: false, Growth: false, Pro: true },
-  { name: 'White-label / API', Starter: false, Growth: false, Pro: true },
-  { name: 'Team Accounts', Starter: false, Growth: false, Pro: true },
-  { name: 'Priority Support', Starter: false, Growth: true, Pro: true },
-];
-
 
 export const Landing: React.FC = () => {
   return (
@@ -298,15 +242,11 @@ export const Landing: React.FC = () => {
             <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg">
               <p className="text-lg italic text-gray-300">
                 “The analytics feature is fantastic! We can see exactly when and where our QR codes are being scanned, helping us optimize our marketing efforts. Plus, the support team is incredibly responsive.”
-              </p>
-              <div className="mt-4 flex items-center">
-                <img src="https://via.placeholder.com/40x40?text=AS" alt="Alice Smith" className="h-10 w-10 rounded-full mr-3" />
+                  className="relative bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-cyan-500 ring-2 ring-cyan-500 p-8 flex flex-col"
                 <div>
-                  <p className="font-semibold text-white">Alex Smith</p>
-                  <p className="text-sm text-gray-400">Marketing Manager, "Urban Boutique"</p>
-                </div>
-              </div>
-            </div>
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-cyan-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
+                    Recommended
+                  </div>
           </div>
         </div>
       </div>
@@ -321,10 +261,11 @@ export const Landing: React.FC = () => {
             <p className="mt-4 text-base sm:text-lg text-gray-400">
               Choose the perfect plan to boost your online reputation and customer engagement.
             </p>
-          </div>
+                    {productFeatures.map((feature, idx) => (
 
           {/* Pricing Tiers */}
-          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 flex justify-center">
+            <div className="max-w-md w-full">
             {products.map((product, index) => (
               <div
                 key={product.id}
@@ -368,66 +309,24 @@ export const Landing: React.FC = () => {
                   </Link>
                 </div>
               </div>
+            </div>
             ))}
           </div>
 
-          {/* Feature Comparison Table */}
+          {/* What's Included Section */}
           <div className="mt-20">
             <h3 className="text-3xl font-extrabold text-white text-center mb-8">
-              Detailed Feature Comparison
+              What's Included
             </h3>
-            <div className="overflow-x-auto rounded-2xl border border-gray-800 shadow-2xl">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-900/60">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Feature
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Starter <br /> $19/mo
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider relative">
-                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-cyan-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md whitespace-nowrap">
-                        Recommended
-                      </span>
-                      Growth <br /> $49/mo
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Pro / Agency <br /> $149/mo
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-transparent divide-y divide-gray-700">
-                  {comparisonFeatures.map((feature, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                        {feature.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-300">
-                        {typeof feature.Starter === 'boolean' ? (
-                          feature.Starter ? <Check className="h-5 w-5 text-green-400 mx-auto" /> : <X className="h-5 w-5 text-red-400 mx-auto" />
-                        ) : (
-                          feature.Starter
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-300">
-                        {typeof feature.Growth === 'boolean' ? (
-                          feature.Growth ? <Check className="h-5 w-5 text-green-400 mx-auto" /> : <X className="h-5 w-5 text-red-400 mx-auto" />
-                        ) : (
-                          feature.Growth
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-300">
-                        {typeof feature.Pro === 'boolean' ? (
-                          feature.Pro ? <Check className="h-5 w-5 text-green-400 mx-auto" /> : <X className="h-5 w-5 text-red-400 mx-auto" />
-                        ) : (
-                          feature.Pro
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {productFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-start">
+                    <Check className="flex-shrink-0 h-5 w-5 text-green-400 mt-0.5" />
+                    <span className="ml-3 text-base text-gray-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

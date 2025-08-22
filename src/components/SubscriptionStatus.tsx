@@ -65,8 +65,14 @@ export const SubscriptionStatus: React.FC = () => {
         return 'Past Due';
       case 'incomplete':
         return 'Incomplete';
+      case 'incomplete_expired':
+        return 'Incomplete Expired';
+      case 'unpaid':
+        return 'Unpaid';
+      case 'paused':
+        return 'Paused';
       default:
-        return subscription.subscription_status;
+        return subscription.subscription_status?.charAt(0).toUpperCase() + subscription.subscription_status?.slice(1) || 'Unknown';
     }
   };
 

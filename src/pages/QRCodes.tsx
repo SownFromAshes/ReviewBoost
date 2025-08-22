@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, UploadCloud, Edit, Search, Wifi, Share2 } from 'lucide-react'; // Added Edit, Search, Wifi, Share2 icons
+import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, Edit, Search, Wifi, Share2 } from 'lucide-react';
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +14,7 @@ interface QRCodeData {
   created_at: string;
   qr_color_dark: string | null;
   qr_color_light: string | null;
-  qr_logo_url: string | null; // Added
+  qr_logo_url: string | null;
 }
 
 // Define template types and their properties
@@ -29,10 +29,7 @@ interface QRTemplates {
     qrColorDark?: string;
     qrColorLight?: string;
   };
-  // For more complex templates, you might need to define specific fields
-  // For example, for Wi-Fi: ssid?: string; password?: string; encryption?: string;
-  // For Social Media: socialLinks?: { platform: string; url: string }[];
-  type: 'url' | 'wifi' | 'social'; // Categorize templates by their underlying data type
+  type: 'url' | 'wifi' | 'social';
 }
 
 const qrTemplates: QRTemplates[] = [
@@ -52,7 +49,7 @@ const qrTemplates: QRTemplates[] = [
     id: 'digital-menu',
     name: 'Digital Menu',
     description: 'Provide easy access to your online menu.',
-    icon: ExternalLink, // Using ExternalLink for now, could be a custom food icon
+    icon: ExternalLink,
     prefill: {
       title: 'Scan for Our Menu',
       qrColorDark: '#000000',
@@ -65,14 +62,14 @@ const qrTemplates: QRTemplates[] = [
     name: 'Connect to Wi-Fi',
     description: 'Simplify Wi-Fi access for your customers.',
     icon: Wifi,
-    type: 'wifi', // This template type requires special handling for QR data
+    type: 'wifi',
   },
   {
     id: 'social-media',
     name: 'Follow Us on Social Media',
     description: 'Increase followers on your social platforms.',
     icon: Share2,
-    type: 'social', // This template type requires a landing page
+    type: 'social',
   },
 ];
 
@@ -80,26 +77,24 @@ export const QRCodes: React.FC = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showTemplateSelection, setShowTemplateSelection] = useState(false); // New state for template selection
-  const [selectedTemplateType, setSelectedTemplateType] = useState<QRTemplates['type'] | null>(null); // To track selected template type
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [selectedTemplateType, setSelectedTemplateType] = useState<QRTemplates['type'] | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
     googleBusinessUrl: '',
-    qrColorDark: '#000000', // Default dark color
-    qrColorLight: '#ffffff', // Default light color
-    logoFile: null as File | null, // Added for logo file
-    logoPreviewUrl: '' as string, // Added for logo preview
-    // New fields for Wi-Fi template (placeholders for now)
+    qrColorDark: '#000000',
+    qrColorLight: '#ffffff',
+    logoFile: null as File | null,
+    logoPreviewUrl: '' as string,
     wifiSsid: '',
     wifiPassword: '',
     wifiEncryption: 'WPA' as 'WPA' | 'WEP' | 'nopass',
-    // New fields for Social Media template (placeholders for now)
     facebookUrl: '',
     instagramUrl: '',
     tiktokUrl: '',
   });
-  // State variables for editing
+
   const [editingQRCode, setEditingQRCode] = useState<QRCodeData | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -167,11 +162,11 @@ export const QRCodes: React.FC = () => {
     if (formData.logoFile) {
       const fileExt = formData.logoFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const filePath = `qr-code-logos/${fileName}`; // Ensure this matches your Supabase Storage bucket name
+      const filePath = `qr-code-logos/${fileName}`;
 
       try {
-        const { data, error: uploadError } = await supabase.storage
-          .from('qr-code-logos') // Your bucket name
+        const { error: uploadError } = await supabase.storage
+          .from('qr-code-logos')
           .upload(filePath, formData.logoFile, {
             cacheControl: '3600',
             upsert: false,
@@ -195,23 +190,14 @@ export const QRCodes: React.FC = () => {
     try {
       const shortCode = generateShortCode();
 
-      // Determine the URL or data to store based on the selected template type
-      let destinationUrlOrData = formData.googleBusinessUrl; // Default for URL types
+      let destinationUrlOrData = formData.googleBusinessUrl;
       if (selectedTemplateType === 'wifi') {
-        // For Wi-Fi, the QR code data is a special string, not a URL.
-        // This would require a new column in your 'qr_codes' table to store this data,
-        // and the RedirectPage would need to handle this special format.
-        // For now, we'll just store a placeholder or the SSID.
         destinationUrlOrData = `WIFI:S:${formData.wifiSsid};T:${formData.wifiEncryption};P:${formData.wifiPassword};;`;
         toast.error('Wi-Fi QR code generation is not fully implemented. This would require database schema changes and special handling in the redirect logic.');
-        return; // Prevent creation for now
+        return;
       } else if (selectedTemplateType === 'social') {
-        // For social media, you'd typically create a landing page that lists all social links.
-        // The QR code would point to this landing page, e.g., /r/social/[shortCode]
-        // This would require a new table or JSONB column to store multiple social links,
-        // and a new React component to render the social landing page.
         toast.error('Social Media QR code generation is not fully implemented. This would require database schema changes and a new landing page component.');
-        return; // Prevent creation for now
+        return;
       }
 
 
@@ -220,11 +206,11 @@ export const QRCodes: React.FC = () => {
         .insert({
           user_id: user.id,
           title: formData.title,
-          google_business_url: destinationUrlOrData, // This would need to be dynamic based on template type
+          google_business_url: destinationUrlOrData,
           short_code: shortCode,
           qr_color_dark: formData.qrColorDark,
           qr_color_light: formData.qrColorLight,
-          qr_logo_url: logoUrl, // Save logo URL
+          qr_logo_url: logoUrl,
         });
 
       if (error) throw error;
@@ -243,9 +229,9 @@ export const QRCodes: React.FC = () => {
         facebookUrl: '',
         instagramUrl: '',
         tiktokUrl: '',
-      }); // Reset form
+      });
       setShowCreateForm(false);
-      setSelectedTemplateType(null); // Reset selected template type
+      setSelectedTemplateType(null);
       fetchQRCodes();
     } catch (error) {
       console.error('Error creating QR code:', error);
@@ -258,11 +244,9 @@ export const QRCodes: React.FC = () => {
     if (!canvas) return;
 
     try {
-      // The tracking URL is always based on the short code for redirection
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
       console.log('Generating QR code for URL:', trackingUrl);
 
-      // Generate QR code data URL
       const qrCodeDataUrl = await QRCode.toDataURL(trackingUrl, {
         width: 300,
         margin: 2,
@@ -286,19 +270,17 @@ export const QRCodes: React.FC = () => {
         if (qrCodeData.qr_logo_url) {
           const logoImage = new Image();
           logoImage.src = qrCodeData.qr_logo_url;
-          logoImage.crossOrigin = 'Anonymous'; // Required for cross-origin images
+          logoImage.crossOrigin = 'Anonymous';
 
           logoImage.onload = () => {
             const qrSize = qrImage.width;
-            const logoSize = qrSize * 0.25; // Logo size, e.g., 25% of QR code size
+            const logoSize = qrSize * 0.25;
             const x = (qrSize - logoSize) / 2;
             const y = (qrSize - logoSize) / 2;
 
-            // Draw a white background for the logo to ensure readability
             ctx.fillStyle = qrCodeData.qr_color_light || '#ffffff';
             ctx.fillRect(x, y, logoSize, logoSize);
             
-            // Draw the logo
             ctx.drawImage(logoImage, x, y, logoSize, logoSize);
 
             const link = document.createElement('a');
@@ -310,14 +292,12 @@ export const QRCodes: React.FC = () => {
           logoImage.onerror = (err) => {
             console.error('Error loading logo image:', err);
             toast.error('Failed to load logo image for QR code.');
-            // Fallback to downloading QR code without logo
             const link = document.createElement('a');
             link.download = `${qrCodeData.title}-qr-code.png`;
             link.href = qrCodeDataUrl;
             link.click();
           };
         } else {
-          // If no logo, just download the QR code
           const link = document.createElement('a');
           link.download = `${qrCodeData.title}-qr-code.png`;
           link.href = qrCodeDataUrl;
@@ -335,29 +315,61 @@ export const QRCodes: React.FC = () => {
       toast.error('Failed to download QR code');
     }
   };
+  
+  // Custom modal for confirmation instead of window.confirm
+  const CustomConfirmModal = ({ message, onConfirm, onCancel }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-lg p-6 max-w-sm w-full">
+        <p className="text-gray-200 text-center mb-4">{message}</p>
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium rounded-md border border-gray-700 text-gray-300 hover:bg-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+  
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [qrCodeToDelete, setQrCodeToDelete] = useState<QRCodeData | null>(null);
 
-  const handleDeleteQRCode = async (qrCodeId: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
-      return;
-    }
-
+  const handleDeleteQRCode = (qrCode: QRCodeData) => {
+    setQrCodeToDelete(qrCode);
+    setShowDeleteConfirm(true);
+  };
+  
+  const confirmDelete = async () => {
+    if (!qrCodeToDelete) return;
+    
     try {
       const { error } = await supabase
         .from('qr_codes')
         .delete()
-        .eq('id', qrCodeId);
+        .eq('id', qrCodeToDelete.id);
 
       if (error) throw error;
 
-      toast.success(`QR code "${title}" deleted successfully!`);
-      fetchQRCodes(); // Refresh the list
+      toast.success(`QR code "${qrCodeToDelete.title}" deleted successfully!`);
+      fetchQRCodes();
     } catch (error) {
       console.error('Error deleting QR code:', error);
       toast.error('Failed to delete QR code');
+    } finally {
+      setShowDeleteConfirm(false);
+      setQrCodeToDelete(null);
     }
   };
 
-  // Function to open the edit form
+
   const openEditForm = (qrCode: QRCodeData) => {
     setEditingQRCode(qrCode);
     setEditFormData({
@@ -365,11 +377,10 @@ export const QRCodes: React.FC = () => {
       googleBusinessUrl: qrCode.google_business_url,
     });
     setShowEditForm(true);
-    setShowCreateForm(false); // Hide create form if open
-    setShowTemplateSelection(false); // Hide template selection if open
+    setShowCreateForm(false);
+    setShowTemplateSelection(false);
   };
 
-  // Function to handle updating a QR code
   const handleUpdateQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingQRCode) return;
@@ -388,7 +399,7 @@ export const QRCodes: React.FC = () => {
       toast.success('QR code updated successfully!');
       setShowEditForm(false);
       setEditingQRCode(null);
-      fetchQRCodes(); // Refresh the list
+      fetchQRCodes();
     } catch (error) {
       console.error('Error updating QR code:', error);
       toast.error('Failed to update QR code');
@@ -399,8 +410,7 @@ export const QRCodes: React.FC = () => {
     setSelectedTemplateType(template.type);
     setFormData(prev => ({
       ...prev,
-      ...template.prefill, // Apply prefill values from the template
-      // Reset specific fields if they are not relevant for the new template type
+      ...template.prefill,
       googleBusinessUrl: template.type === 'url' ? (template.prefill?.googleBusinessUrl || '') : '',
       wifiSsid: template.type === 'wifi' ? (template.prefill?.wifiSsid || '') : '',
       wifiPassword: template.type === 'wifi' ? (template.prefill?.wifiPassword || '') : '',
@@ -433,10 +443,10 @@ export const QRCodes: React.FC = () => {
             Manage your review QR codes and tracking links
           </p>
         </div>
-        <div className="mt-4 flex-shrink-0 w-full md:w-auto md:mt-0 md:ml-4"> {/* Layout Fix */}
+        <div className="mt-4 flex-shrink-0 w-full md:w-auto md:mt-0 md:ml-4">
           <button
-            onClick={() => { setShowTemplateSelection(true); setShowCreateForm(false); setShowEditForm(false); }} // Show template selection first
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 w-full justify-center" // Added w-full justify-center for mobile
+            onClick={() => { setShowTemplateSelection(true); setShowCreateForm(false); setShowEditForm(false); }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 w-full justify-center"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create QR Code
@@ -734,6 +744,15 @@ export const QRCodes: React.FC = () => {
           </form>
         </div>
       )}
+      
+      {/* Custom delete confirmation modal */}
+      {showDeleteConfirm && qrCodeToDelete && (
+        <CustomConfirmModal 
+          message={`Are you sure you want to delete "${qrCodeToDelete.title}"? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
 
       {/* QR Codes Grid */}
       {qrCodes.length === 0 ? (
@@ -745,7 +764,7 @@ export const QRCodes: React.FC = () => {
           </p>
           <div className="mt-6">
             <button
-              onClick={() => setShowTemplateSelection(true)} // Show template selection first
+              onClick={() => setShowTemplateSelection(true)}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -775,10 +794,11 @@ export const QRCodes: React.FC = () => {
                     <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
                 </div>
-                <div className="mt-6 grid grid-cols-2 gap-2 lg:flex lg:space-x-3"> {/* Layout Fix */}
+                {/* Button Layout Fix: Removed lg:flex and lg:space-x-3 for a consistent grid */}
+                <div className="mt-6 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => downloadQRCode(qrCode)}
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
+                    className="inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download
@@ -787,21 +807,21 @@ export const QRCodes: React.FC = () => {
                     href={`/r/${qrCode.short_code}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+                    className="inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Test
                   </a>
                   <button
                     onClick={() => openEditForm(qrCode)}
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
+                    className="inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
-                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
+                    onClick={() => handleDeleteQRCode(qrCode)}
+                    className="inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Trash className="h-4 w-4 mr-1" />
                     Delete
@@ -818,4 +838,3 @@ export const QRCodes: React.FC = () => {
     </div>
   );
 };
-

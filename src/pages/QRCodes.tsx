@@ -774,7 +774,7 @@ export const QRCodes: React.FC = () => {
                     <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
                 </div>
-                <div className="mt-6 grid grid-cols-2 gap-2 lg:flex lg:space-x-3">
+                <div className="mt-6 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => downloadQRCode(qrCode)}
                     className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"

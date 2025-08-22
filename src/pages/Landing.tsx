@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { QrCode, BarChart3, Shield, Zap, Check } from 'lucide-react';
+import { QrCode, BarChart3, Shield, Zap, Check, DollarSign } from 'lucide-react'; // Import DollarSign icon
 
 export const Landing: React.FC = () => {
   return (
@@ -19,6 +19,13 @@ export const Landing: React.FC = () => {
             </div>
             {/* Reworked header buttons for mobile responsiveness */}
             <div className="flex flex-1 items-center justify-end space-x-3 md:flex-1 md:space-x-4 lg:w-0">
+              {/* Added Pricing link to header */}
+              <Link
+                to="/pricing"
+                className="whitespace-nowrap text-base font-medium text-gray-300 hover:text-cyan-400 transition py-2 px-3 rounded-xl hidden md:inline-flex items-center"
+              >
+                <DollarSign className="h-4 w-4 mr-1" /> Pricing
+              </Link>
               <Link
                 to="/login"
                 className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-cyan-400 rounded-xl shadow-lg text-base font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300"

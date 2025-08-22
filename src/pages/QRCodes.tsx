@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, UploadCloud } from 'lucide-react'; // Added UploadCloud icon
+import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, UploadCloud, Edit } from 'lucide-react'; // Added UploadCloud and Edit icons
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +29,14 @@ export const QRCodes: React.FC = () => {
     logoFile: null as File | null, // Added for logo file
     logoPreviewUrl: '' as string, // Added for logo preview
   });
+  // State variables for editing
+  const [editingQRCode, setEditingQRCode] = useState<QRCodeData | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    googleBusinessUrl: '',
+  });
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { user } = useAuth();
 
@@ -251,6 +259,43 @@ export const QRCodes: React.FC = () => {
     }
   };
 
+  // Function to open the edit form
+  const openEditForm = (qrCode: QRCodeData) => {
+    setEditingQRCode(qrCode);
+    setEditFormData({
+      title: qrCode.title,
+      googleBusinessUrl: qrCode.google_business_url,
+    });
+    setShowEditForm(true);
+    setShowCreateForm(false); // Hide create form if open
+  };
+
+  // Function to handle updating a QR code
+  const handleUpdateQRCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQRCode) return;
+
+    try {
+      const { error } = await supabase
+        .from('qr_codes')
+        .update({
+          title: editFormData.title,
+          google_business_url: editFormData.googleBusinessUrl,
+        })
+        .eq('id', editingQRCode.id);
+
+      if (error) throw error;
+
+      toast.success('QR code updated successfully!');
+      setShowEditForm(false);
+      setEditingQRCode(null);
+      fetchQRCodes(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating QR code:', error);
+      toast.error('Failed to update QR code');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -273,7 +318,7 @@ export const QRCodes: React.FC = () => {
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
           <button
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => { setShowCreateForm(true); setShowEditForm(false); }} // Ensure edit form is closed
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -388,6 +433,58 @@ export const QRCodes: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Form */}
+      {showEditForm && editingQRCode && (
+        <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-6 mt-6">
+          <h3 className="text-lg font-medium text-white mb-4">Edit QR Code: {editingQRCode.title}</h3>
+          <form onSubmit={handleUpdateQRCode} className="space-y-4">
+            <div>
+              <label htmlFor="editTitle" className="block text-sm font-medium text-gray-300">
+                Title
+              </label>
+              <input
+                type="text"
+                id="editTitle"
+                required
+                value={editFormData.title}
+                onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                placeholder="e.g., Main Location Reviews"
+              />
+            </div>
+            <div>
+              <label htmlFor="editGoogleBusinessUrl" className="block text-sm font-medium text-gray-300">
+                Google Business Review URL
+              </label>
+              <input
+                type="url"
+                id="editGoogleBusinessUrl"
+                required
+                value={editFormData.googleBusinessUrl}
+                onChange={(e) => setEditFormData({ ...editFormData, googleBusinessUrl: e.target.value })}
+                className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                placeholder="https://g.page/your-business/review"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => { setShowEditForm(false); setEditingQRCode(null); }}
+                className="px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* QR Codes Grid */}
       {qrCodes.length === 0 ? (
         <div className="text-center py-12 mt-6">
@@ -446,6 +543,13 @@ export const QRCodes: React.FC = () => {
                     Test
                   </a>
                   <button
+                    onClick={() => openEditForm(qrCode)} // Added Edit button
+                    className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </button>
+                  <button
                     onClick={() => handleDeleteQRCode(qrCode.id, qrCode.title)}
                     className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-700 rounded-md shadow-sm text-sm font-medium text-red-300 bg-gray-900/60 hover:bg-gray-800"
                   >
@@ -464,3 +568,4 @@ export const QRCodes: React.FC = () => {
     </div>
   );
 };
+

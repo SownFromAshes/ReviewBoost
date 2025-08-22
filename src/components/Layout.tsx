@@ -1,8 +1,8 @@
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
-import { QrCode, Settings, Users, LogOut, BarChart3, Menu, X } from 'lucide-react'; // Import Menu and X icons
+import { QrCode, Settings, Users, LogOut, BarChart3, Menu, X, DollarSign } from 'lucide-react'; // Import DollarSign icon
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,7 +12,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, profile, signOut } = useAuth();
   const { subscription } = useSubscription();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State for mobile menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) {
     return <>{children}</>;
@@ -22,6 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
     { name: 'QR Codes', href: '/qr-codes', icon: QrCode },
     { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Pricing', href: '/pricing', icon: DollarSign }, // Added Pricing link
   ];
 
   if (profile?.email === 'admin@reviewboost.com') {
@@ -35,6 +36,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       console.error('Error signing out:', error);
     }
   };
+
+  // Calculate trial days remaining for the banner
+  const trialDaysRemaining = profile?.trial_ends_at
+    ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const showTrialBanner = profile?.subscription_status === 'trial' && trialDaysRemaining > 0;
 
   return (
     <div className="min-h-screen">
@@ -114,7 +122,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  onClick={() => setMobileMenuOpen(false)} // Close menu on click
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
                     isActive
                       ? 'bg-gray-800 text-cyan-400'
@@ -130,7 +138,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="pt-4 pb-3 border-t border-gray-700">
             <div className="flex items-center px-5">
               <div className="flex-shrink-0">
-                {/* User avatar placeholder or initial */}
                 <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-white text-lg font-semibold">
                   {profile?.email ? profile.email[0].toUpperCase() : '?'}
                 </div>
@@ -146,7 +153,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <button
                 onClick={() => {
                   handleSignOut();
-                  setMobileMenuOpen(false); // Close menu on sign out
+                  setMobileMenuOpen(false);
                 }}
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-cyan-400"
               >
@@ -155,6 +162,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Trial Status Banner (Persistent) */}
+      {showTrialBanner && (
+        <div className="bg-yellow-900/30 border border-yellow-700 text-yellow-300 text-sm p-3 text-center sticky top-16 z-40">
+          Your free trial has {trialDaysRemaining} days remaining. <Link to="/pricing" className="font-semibold underline hover:text-yellow-200">Upgrade now</Link> to unlock all features!
         </div>
       )}
 

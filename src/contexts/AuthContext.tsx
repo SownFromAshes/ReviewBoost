@@ -3,7 +3,12 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
+// Extend the Profile type with new subscription fields
+type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  subscription_tier?: string;
+  trial_ends_at?: string | null;
+  is_active_subscription?: boolean;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -57,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Select all columns, including the new subscription fields
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -79,6 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         data: {
           company_name: companyName,
+          // New users start as 'trial' or 'free' based on your initial setup
+          // The webhook will update this accurately after checkout.session.completed
+          subscription_tier: 'trial', // Default new sign-ups to trial
+          is_active_subscription: true, // Active during trial
+          // trial_ends_at will be set by the webhook from Stripe's trial_end
         },
       },
     });

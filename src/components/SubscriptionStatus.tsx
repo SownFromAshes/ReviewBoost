@@ -19,7 +19,7 @@ export const SubscriptionStatus: React.FC = () => {
     );
   }
 
-  if (!subscription) {
+  if (!subscription || !subscription.customer_id) { // Check for customer_id to ensure it's a valid Stripe-linked subscription
     return (
       <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-6">
         <div className="flex items-center">
@@ -88,6 +88,11 @@ export const SubscriptionStatus: React.FC = () => {
               <p className="text-sm text-gray-300">
                 {subscription.cancel_at_period_end ? 'Expires' : 'Renews'} on{' '}
                 <span className="font-medium">{periodEnd.toLocaleDateString()}</span>
+              </p>
+            )}
+            {subscription.subscription_tier && (
+              <p className="text-sm text-gray-300">
+                Tier: <span className="font-medium capitalize">{subscription.subscription_tier}</span>
               </p>
             )}
           </div>

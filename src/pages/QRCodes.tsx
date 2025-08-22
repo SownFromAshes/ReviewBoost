@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, UploadCloud, Edit } from 'lucide-react'; // Added UploadCloud and Edit icons
+import { Download, ExternalLink, Plus, QrCode as QrCodeIcon, Trash, UploadCloud, Edit, Search, Wifi, Share2 } from 'lucide-react'; // Added Edit, Search, Wifi, Share2 icons
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,10 +17,72 @@ interface QRCodeData {
   qr_logo_url: string | null; // Added
 }
 
+// Define template types and their properties
+interface QRTemplates {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  prefill?: {
+    title?: string;
+    googleBusinessUrl?: string;
+    qrColorDark?: string;
+    qrColorLight?: string;
+  };
+  // For more complex templates, you might need to define specific fields
+  // For example, for Wi-Fi: ssid?: string; password?: string; encryption?: string;
+  // For Social Media: socialLinks?: { platform: string; url: string }[];
+  type: 'url' | 'wifi' | 'social'; // Categorize templates by their underlying data type
+}
+
+const qrTemplates: QRTemplates[] = [
+  {
+    id: 'google-review',
+    name: 'Google Review',
+    description: 'Drive more Google reviews for your business.',
+    icon: Search,
+    prefill: {
+      title: 'Scan for Google Review',
+      qrColorDark: '#000000',
+      qrColorLight: '#ffffff',
+    },
+    type: 'url',
+  },
+  {
+    id: 'digital-menu',
+    name: 'Digital Menu',
+    description: 'Provide easy access to your online menu.',
+    icon: ExternalLink, // Using ExternalLink for now, could be a custom food icon
+    prefill: {
+      title: 'Scan for Our Menu',
+      qrColorDark: '#000000',
+      qrColorLight: '#ffffff',
+    },
+    type: 'url',
+  },
+  {
+    id: 'connect-wifi',
+    name: 'Connect to Wi-Fi',
+    description: 'Simplify Wi-Fi access for your customers.',
+    icon: Wifi,
+    type: 'wifi', // This template type requires special handling for QR data
+  },
+  {
+    id: 'social-media',
+    name: 'Follow Us on Social Media',
+    description: 'Increase followers on your social platforms.',
+    icon: Share2,
+    type: 'social', // This template type requires a landing page
+  },
+];
+
 export const QRCodes: React.FC = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false); // New state for template selection
+  const [selectedTemplateType, setSelectedTemplateType] = useState<QRTemplates['type'] | null>(null); // To track selected template type
+
   const [formData, setFormData] = useState({
     title: '',
     googleBusinessUrl: '',
@@ -28,6 +90,14 @@ export const QRCodes: React.FC = () => {
     qrColorLight: '#ffffff', // Default light color
     logoFile: null as File | null, // Added for logo file
     logoPreviewUrl: '' as string, // Added for logo preview
+    // New fields for Wi-Fi template (placeholders for now)
+    wifiSsid: '',
+    wifiPassword: '',
+    wifiEncryption: 'WPA' as 'WPA' | 'WEP' | 'nopass',
+    // New fields for Social Media template (placeholders for now)
+    facebookUrl: '',
+    instagramUrl: '',
+    tiktokUrl: '',
   });
   // State variables for editing
   const [editingQRCode, setEditingQRCode] = useState<QRCodeData | null>(null);
@@ -125,12 +195,32 @@ export const QRCodes: React.FC = () => {
     try {
       const shortCode = generateShortCode();
 
+      // Determine the URL or data to store based on the selected template type
+      let destinationUrlOrData = formData.googleBusinessUrl; // Default for URL types
+      if (selectedTemplateType === 'wifi') {
+        // For Wi-Fi, the QR code data is a special string, not a URL.
+        // This would require a new column in your 'qr_codes' table to store this data,
+        // and the RedirectPage would need to handle this special format.
+        // For now, we'll just store a placeholder or the SSID.
+        destinationUrlOrData = `WIFI:S:${formData.wifiSsid};T:${formData.wifiEncryption};P:${formData.wifiPassword};;`;
+        toast.error('Wi-Fi QR code generation is not fully implemented. This would require database schema changes and special handling in the redirect logic.');
+        return; // Prevent creation for now
+      } else if (selectedTemplateType === 'social') {
+        // For social media, you'd typically create a landing page that lists all social links.
+        // The QR code would point to this landing page, e.g., /r/social/[shortCode]
+        // This would require a new table or JSONB column to store multiple social links,
+        // and a new React component to render the social landing page.
+        toast.error('Social Media QR code generation is not fully implemented. This would require database schema changes and a new landing page component.');
+        return; // Prevent creation for now
+      }
+
+
       const { error } = await supabase
         .from('qr_codes')
         .insert({
           user_id: user.id,
           title: formData.title,
-          google_business_url: formData.googleBusinessUrl,
+          google_business_url: destinationUrlOrData, // This would need to be dynamic based on template type
           short_code: shortCode,
           qr_color_dark: formData.qrColorDark,
           qr_color_light: formData.qrColorLight,
@@ -147,8 +237,15 @@ export const QRCodes: React.FC = () => {
         qrColorLight: '#ffffff',
         logoFile: null,
         logoPreviewUrl: '',
+        wifiSsid: '',
+        wifiPassword: '',
+        wifiEncryption: 'WPA',
+        facebookUrl: '',
+        instagramUrl: '',
+        tiktokUrl: '',
       }); // Reset form
       setShowCreateForm(false);
+      setSelectedTemplateType(null); // Reset selected template type
       fetchQRCodes();
     } catch (error) {
       console.error('Error creating QR code:', error);
@@ -161,6 +258,7 @@ export const QRCodes: React.FC = () => {
     if (!canvas) return;
 
     try {
+      // The tracking URL is always based on the short code for redirection
       const trackingUrl = `${window.location.origin}/r/${qrCodeData.short_code}`;
       console.log('Generating QR code for URL:', trackingUrl);
 
@@ -268,6 +366,7 @@ export const QRCodes: React.FC = () => {
     });
     setShowEditForm(true);
     setShowCreateForm(false); // Hide create form if open
+    setShowTemplateSelection(false); // Hide template selection if open
   };
 
   // Function to handle updating a QR code
@@ -296,6 +395,24 @@ export const QRCodes: React.FC = () => {
     }
   };
 
+  const handleSelectTemplate = (template: QRTemplates) => {
+    setSelectedTemplateType(template.type);
+    setFormData(prev => ({
+      ...prev,
+      ...template.prefill, // Apply prefill values from the template
+      // Reset specific fields if they are not relevant for the new template type
+      googleBusinessUrl: template.type === 'url' ? (template.prefill?.googleBusinessUrl || '') : '',
+      wifiSsid: template.type === 'wifi' ? (template.prefill?.wifiSsid || '') : '',
+      wifiPassword: template.type === 'wifi' ? (template.prefill?.wifiPassword || '') : '',
+      wifiEncryption: template.type === 'wifi' ? (template.prefill?.wifiEncryption || 'WPA') : 'WPA',
+      facebookUrl: template.type === 'social' ? (template.prefill?.facebookUrl || '') : '',
+      instagramUrl: template.type === 'social' ? (template.prefill?.instagramUrl || '') : '',
+      tiktokUrl: template.type === 'social' ? (template.prefill?.tiktokUrl || '') : '',
+    }));
+    setShowTemplateSelection(false);
+    setShowCreateForm(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -316,16 +433,48 @@ export const QRCodes: React.FC = () => {
             Manage your review QR codes and tracking links
           </p>
         </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4">
+        <div className="mt-4 flex-shrink-0 w-full md:w-auto md:mt-0 md:ml-4"> {/* Layout Fix */}
           <button
-            onClick={() => { setShowCreateForm(true); setShowEditForm(false); }} // Ensure edit form is closed
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+            onClick={() => { setShowTemplateSelection(true); setShowCreateForm(false); setShowEditForm(false); }} // Show template selection first
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 w-full justify-center" // Added w-full justify-center for mobile
           >
             <Plus className="h-4 w-4 mr-2" />
             Create QR Code
           </button>
         </div>
       </div>
+
+      {/* Template Selection */}
+      {showTemplateSelection && (
+        <div className="bg-black/40 backdrop-blur-xl shadow-2xl rounded-2xl border border-gray-800 p-6 mt-6">
+          <h3 className="text-lg font-medium text-white mb-4">Choose a QR Code Template</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {qrTemplates.map((template) => {
+              const Icon = template.icon;
+              return (
+                <div
+                  key={template.id}
+                  className="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-cyan-500 transition"
+                  onClick={() => handleSelectTemplate(template)}
+                >
+                  <Icon className="h-8 w-8 text-cyan-400 mb-2" />
+                  <h4 className="font-semibold text-white">{template.name}</h4>
+                  <p className="text-sm text-gray-400 mt-1">{template.description}</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              type="button"
+              onClick={() => setShowTemplateSelection(false)}
+              className="px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create Form */}
       {showCreateForm && (
@@ -346,20 +495,121 @@ export const QRCodes: React.FC = () => {
                 placeholder="e.g., Main Location Reviews"
               />
             </div>
-            <div>
-              <label htmlFor="googleBusinessUrl" className="block text-sm font-medium text-gray-300">
-                Google Business Review URL
-              </label>
-              <input
-                type="url"
-                id="googleBusinessUrl"
-                required
-                value={formData.googleBusinessUrl}
-                onChange={(e) => setFormData({ ...formData, googleBusinessUrl: e.target.value })}
-                className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
-                placeholder="https://g.page/your-business/review"
-              />
-            </div>
+
+            {selectedTemplateType === 'url' && (
+              <div>
+                <label htmlFor="googleBusinessUrl" className="block text-sm font-medium text-gray-300">
+                  Destination URL
+                </label>
+                <input
+                  type="url"
+                  id="googleBusinessUrl"
+                  required
+                  value={formData.googleBusinessUrl}
+                  onChange={(e) => setFormData({ ...formData, googleBusinessUrl: e.target.value })}
+                  className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                  placeholder="https://g.page/your-business/review or your menu link"
+                />
+              </div>
+            )}
+
+            {selectedTemplateType === 'wifi' && (
+              <>
+                <div className="text-yellow-400 text-sm">
+                  Note: Full Wi-Fi QR code generation requires database schema changes and special handling in the redirect logic. This is a placeholder.
+                </div>
+                <div>
+                  <label htmlFor="wifiSsid" className="block text-sm font-medium text-gray-300">
+                    Wi-Fi Network Name (SSID)
+                  </label>
+                  <input
+                    type="text"
+                    id="wifiSsid"
+                    required
+                    value={formData.wifiSsid}
+                    onChange={(e) => setFormData({ ...formData, wifiSsid: e.target.value })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                    placeholder="Your Wi-Fi Network Name"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="wifiPassword" className="block text-sm font-medium text-gray-300">
+                    Wi-Fi Password
+                  </label>
+                  <input
+                    type="password"
+                    id="wifiPassword"
+                    value={formData.wifiPassword}
+                    onChange={(e) => setFormData({ ...formData, wifiPassword: e.target.value })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                    placeholder="Wi-Fi Password (leave blank for open networks)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="wifiEncryption" className="block text-sm font-medium text-gray-300">
+                    Encryption Type
+                  </label>
+                  <select
+                    id="wifiEncryption"
+                    value={formData.wifiEncryption}
+                    onChange={(e) => setFormData({ ...formData, wifiEncryption: e.target.value as 'WPA' | 'WEP' | 'nopass' })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                  >
+                    <option value="WPA">WPA/WPA2</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">None (Open Network)</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            {selectedTemplateType === 'social' && (
+              <>
+                <div className="text-yellow-400 text-sm">
+                  Note: Full Social Media QR code generation requires database schema changes (e.g., JSONB column for links) and a new landing page component. This is a placeholder.
+                </div>
+                <div>
+                  <label htmlFor="facebookUrl" className="block text-sm font-medium text-gray-300">
+                    Facebook Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    id="facebookUrl"
+                    value={formData.facebookUrl}
+                    onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                    placeholder="https://facebook.com/yourpage"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="instagramUrl" className="block text-sm font-medium text-gray-300">
+                    Instagram Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    id="instagramUrl"
+                    value={formData.instagramUrl}
+                    onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                    placeholder="https://instagram.com/yourprofile"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tiktokUrl" className="block text-sm font-medium text-gray-300">
+                    TikTok Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    id="tiktokUrl"
+                    value={formData.tiktokUrl}
+                    onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+                    className="mt-1 block w-full rounded-xl border border-gray-700 placeholder-gray-500 text-gray-200 bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+                    placeholder="https://tiktok.com/@yourprofile"
+                  />
+                </div>
+              </>
+            )}
+
             {/* Color input fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -417,7 +667,7 @@ export const QRCodes: React.FC = () => {
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => setShowCreateForm(false)}
+                onClick={() => { setShowCreateForm(false); setSelectedTemplateType(null); }}
                 className="px-4 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
@@ -495,7 +745,7 @@ export const QRCodes: React.FC = () => {
           </p>
           <div className="mt-6">
             <button
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => setShowTemplateSelection(true)} // Show template selection first
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -525,7 +775,7 @@ export const QRCodes: React.FC = () => {
                     <span className="font-medium text-white">{qrCode.scan_count}</span>
                   </div>
                 </div>
-                <div className="mt-6 flex space-x-3">
+                <div className="mt-6 grid grid-cols-2 gap-2 lg:flex lg:space-x-3"> {/* Layout Fix */}
                   <button
                     onClick={() => downloadQRCode(qrCode)}
                     className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
@@ -543,7 +793,7 @@ export const QRCodes: React.FC = () => {
                     Test
                   </a>
                   <button
-                    onClick={() => openEditForm(qrCode)} // Added Edit button
+                    onClick={() => openEditForm(qrCode)}
                     className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-900/60 hover:bg-gray-800"
                   >
                     <Edit className="h-4 w-4 mr-1" />

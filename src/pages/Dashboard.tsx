@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { BarChart3, QrCode, Users, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom'; // Import Link for navigation
+import { Link } from 'react-router-dom';
+import { useSubscription } from '../hooks/useSubscription'; // Import useSubscription
 
 interface QRCodeData {
   id: string;
@@ -13,6 +14,7 @@ interface QRCodeData {
 
 export const Dashboard: React.FC = () => {
   const { profile } = useAuth();
+  const { subscription, loading: subLoading, getCurrentPeriodEnd } = useSubscription();
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,9 +69,19 @@ export const Dashboard: React.FC = () => {
     },
   ];
 
-  const trialDaysRemaining = profile?.trial_ends_at 
+  const trialDaysRemaining = profile?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
+
+  const nextBillingDate = getCurrentPeriodEnd();
+
+  if (loading || subLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 font-sans antialiased p-6">
@@ -85,8 +97,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Trial Status */}
-      {profile?.subscription_status === 'trial' && (
+      {/* Subscription Status Banner */}
+      {profile?.subscription_tier === 'trial' && trialDaysRemaining > 0 && (
         <div className="rounded-md bg-yellow-900/30 border border-yellow-700 p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -94,10 +106,7 @@ export const Dashboard: React.FC = () => {
                 Free Trial Active
               </h3>
               <p className="text-sm text-yellow-400">
-                {trialDaysRemaining > 0 
-                  ? `${trialDaysRemaining} days remaining in your free trial.`
-                  : 'Your trial has expired.'
-                } Upgrade to continue using ReviewBoost.
+                {trialDaysRemaining} days remaining in your free trial. Upgrade to continue using ReviewBoost.
               </p>
             </div>
             <Link
@@ -105,6 +114,50 @@ export const Dashboard: React.FC = () => {
               className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
             >
               Upgrade Now
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {profile?.subscription_tier === 'free' && !profile?.is_active_subscription && (
+        <div className="rounded-md bg-red-900/30 border border-red-700 p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-300">
+                No Active Subscription
+              </h3>
+              <p className="text-sm text-red-400">
+                Your trial has ended or you do not have an active plan. Some features may be limited.
+              </p>
+            </div>
+            <Link
+              to="/pricing"
+              className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+            >
+              View Plans
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {profile?.subscription_tier && profile.subscription_tier !== 'free' && profile.subscription_tier !== 'trial' && (
+        <div className="rounded-md bg-green-900/30 border border-green-700 p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-green-300">
+                Current Plan: <span className="capitalize">{profile.subscription_tier}</span>
+              </h3>
+              {nextBillingDate && (
+                <p className="text-sm text-green-400">
+                  Your plan renews on {nextBillingDate.toLocaleDateString()}.
+                </p>
+              )}
+            </div>
+            <Link
+              to="/settings" // Link to settings where "Manage Billing" button is
+              className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+            >
+              Manage Plan
             </Link>
           </div>
         </div>

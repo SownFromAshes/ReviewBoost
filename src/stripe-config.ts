@@ -30,7 +30,7 @@ export const products: Product[] = [
     name: 'Pro / Agency',
     description: 'For franchises, agencies, or multi-location SMBs.',
     mode: 'subscription',
-    price: 149, // Or 199, depending on your final decision
+    price: 149,
   },
 ];
 

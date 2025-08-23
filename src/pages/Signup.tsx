@@ -43,7 +43,7 @@ export const Signup: React.FC = () => {
             Start your free trial
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            7 days free, then <span className="text-cyan-400 font-semibold">$29/month</span>
+            7 days free, then <span className="text-cyan-400 font-semibold">$19/month</span>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

@@ -9,12 +9,28 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: 'prod_SunRK1PuWIi83y',
-    priceId: 'price_1RyxqPL6DzuVZFHtTAokGNrQ',
-    name: 'ReviewBoostSC Test',
-    description: 'Testing',
+    id: 'prod_Starter_ID', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_Starter_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    name: 'Starter',
+    description: 'For solopreneurs & micro-SMBs.',
     mode: 'subscription',
     price: 19,
+  },
+  {
+    id: 'prod_Growth_ID', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_Growth_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    name: 'Growth',
+    description: 'Designed for 1–5 location businesses.',
+    mode: 'subscription',
+    price: 49,
+  },
+  {
+    id: 'prod_Pro_ID', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_Pro_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    name: 'Pro / Agency',
+    description: 'For franchises, agencies, or multi-location SMBs.',
+    mode: 'subscription',
+    price: 149, // Or 199, depending on your final decision
   },
 ];
 

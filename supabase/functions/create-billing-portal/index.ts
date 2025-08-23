@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
     return corsResponse({ url: portalSession.url });
   } catch (error: any) {
-    console.error(`Billing portal error: ${error.message}`);
+    console.error('Billing portal error:', error);
     return corsResponse({ error: error.message }, 500);
   }
 });

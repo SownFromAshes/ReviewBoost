@@ -7,7 +7,10 @@ const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const stripe = new Stripe(stripeSecret, { appInfo: { name: 'Bolt Integration', version: '1.0.0' } });
 
-const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
 
 Deno.serve(async (req) => {
   try {
@@ -24,14 +27,14 @@ Deno.serve(async (req) => {
       event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message);
-      return new Response(JSON.stringify({ error: `Webhook verification failed: ${err.message}` }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: `Webhook verification failed: ${err.message}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Fire-and-forget event handling
-    handleEvent(event).catch((err) => console.error('Error in handleEvent:', err));
+    // Fire-and-forget processing
+    EdgeRuntime.waitUntil(handleEvent(event));
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
@@ -73,10 +76,12 @@ async function handleEvent(event: Stripe.Event) {
     case 'invoice.payment_succeeded':
       await syncSubscription(customerId, userId);
       break;
+
     case 'checkout.session.completed':
       const session = stripeData as Stripe.Checkout.Session;
       if (session.mode === 'subscription' && session.subscription) await syncSubscription(customerId, userId);
       break;
+
     default:
       console.warn(`Unhandled Stripe event: ${event.type}`);
   }
@@ -97,17 +102,17 @@ async function syncSubscription(customerId: string, userId: string) {
       priceId = subscription.items.data[0]?.price?.id ?? null;
       trialEnd = subscription.trial_end;
 
-      const product = products.find((p) => p.priceId === priceId);
       if (subscriptionStatus === 'trialing') {
         subscriptionTier = 'trial';
       } else if (subscriptionStatus === 'active') {
+        const product = getProductByPriceId(priceId!);
         subscriptionTier = product?.name.toLowerCase() ?? 'free';
       } else {
         subscriptionTier = 'free';
       }
     }
 
-    // Upsert subscription
+    // Upsert subscription in Supabase
     await supabase.from('stripe_user_subscriptions').upsert({
       customer_id: customerId,
       user_id: userId,
@@ -117,7 +122,7 @@ async function syncSubscription(customerId: string, userId: string) {
       updated_at: new Date().toISOString(),
     }, { onConflict: ['customer_id'] });
 
-    // Update profile
+    // Update profile table
     const profileUpdates: any = {
       subscription_tier: subscriptionTier,
       is_active_subscription: subscriptionStatus === 'active' || subscriptionStatus === 'trialing',

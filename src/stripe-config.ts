@@ -9,24 +9,24 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: 'prod_Starter_ID', // Placeholder: Replace with actual Stripe Product ID
-    priceId: 'price_Starter_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    id: 'prod_Sv7cMUjJb9M6o2', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_1RzHN6PoAh9wZtczVvlJXaba', // Placeholder: Replace with actual Stripe Price ID
     name: 'Starter',
     description: 'For solopreneurs & micro-SMBs.',
     mode: 'subscription',
     price: 19,
   },
   {
-    id: 'prod_Growth_ID', // Placeholder: Replace with actual Stripe Product ID
-    priceId: 'price_Growth_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    id: 'prod_Sv7cA2Fr3pSB1y', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_1RzHNcPoAh9wZtczlZ85bPP7', // Placeholder: Replace with actual Stripe Price ID
     name: 'Growth',
     description: 'Designed for 1–5 location businesses.',
     mode: 'subscription',
     price: 49,
   },
   {
-    id: 'prod_Pro_ID', // Placeholder: Replace with actual Stripe Product ID
-    priceId: 'price_Pro_Monthly', // Placeholder: Replace with actual Stripe Price ID
+    id: 'prod_Sv7dzbMIwOP9Lc', // Placeholder: Replace with actual Stripe Product ID
+    priceId: 'price_1RzHNsPoAh9wZtcz9STEJwli', // Placeholder: Replace with actual Stripe Price ID
     name: 'Pro / Agency',
     description: 'For franchises, agencies, or multi-location SMBs.',
     mode: 'subscription',

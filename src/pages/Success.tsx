@@ -2,27 +2,45 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Success: React.FC = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const { refetch } = useSubscription();
+  const { user, profile, isLoading: isUserLoading } = useAuth();
+  const { refetch, loading: subscriptionLoading } = useSubscription();
   const [isRefetching, setIsRefetching] = useState(false);
 
   useEffect(() => {
-    // Refetch subscription data after successful payment
     const refreshData = async () => {
+      if (!user || !profile) return;
+
       setIsRefetching(true);
-      // Wait a moment for webhook to process
+
+      // Give webhook a moment to process subscription
       await new Promise(resolve => setTimeout(resolve, 2000));
-      await refetch();
-      setIsRefetching(false);
+
+      try {
+        await refetch();
+      } catch (err) {
+        console.error('Error refetching subscription:', err);
+      } finally {
+        setIsRefetching(false);
+      }
     };
 
-    if (sessionId) {
+    if (sessionId && user && profile) {
       refreshData();
     }
-  }, [sessionId, refetch]);
+  }, [sessionId, user, profile, refetch]);
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Loading user data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -39,12 +57,13 @@ export const Success: React.FC = () => {
           </p>
         </div>
 
-        {isRefetching && (
+        {/* Real-time updating subscription */}
+        {(isRefetching || subscriptionLoading) && (
           <div className="bg-blue-900/30 border border-blue-700 rounded-md p-4">
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-3"></div>
               <p className="text-sm text-blue-300">
-                Updating your account...
+                Updating your subscription...
               </p>
             </div>
           </div>

@@ -20,25 +20,11 @@ export const Admin: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      // Fetch profiles and join with stripe_user_subscriptions to get full status
-      const { data, error } = await supabase
-  .from('users') // 👈 switch from 'profiles' to 'users'
-  .select(`
-    id,
-    email,
-    profiles (
-      company_name,
-      subscription_tier,
-      trial_ends_at,
-      created_at
-    ),
-    stripe_user_subscriptions (
-      subscription_status
-    )
-  `)
-  .order('created_at', { referencedTable: 'profiles', ascending: false }) // 👈 order by profiles.created_at
+  const { data, error } = await supabase
+  .from('profiles')
+  .select('id,email,company_name,created_at,subscription_tier,trial_ends_at')
+  .order('created_at', { ascending: false })
+
 
 
       if (error) throw error;

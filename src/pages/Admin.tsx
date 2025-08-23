@@ -6,8 +6,8 @@ interface User {
   id: string;
   email: string;
   company_name: string | null;
-  subscription_status: string; // This is from stripe_user_subscriptions
-  subscription_tier: string; // This is from profiles
+  subscription_status: string; // from stripe_user_subscriptions
+  subscription_tier: string | null; // from profiles
   trial_ends_at: string | null;
   created_at: string;
 }
@@ -20,26 +20,37 @@ export const Admin: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const { data, error } = await supabase
-  .from('profiles')
-  .select('id,email,company_name,created_at,subscription_tier,trial_ends_at')
-  .order('created_at', { ascending: false })
+  const fetchUsers = async () => {
+    try {
+      // 1️⃣ Fetch profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id,email,company_name,subscription_tier,trial_ends_at,created_at')
+        .order('created_at', { ascending: false });
 
+      if (profilesError) throw profilesError;
 
+      // 2️⃣ Fetch subscriptions
+      const { data: subsData, error: subsError } = await supabase
+        .from('stripe_user_subscriptions')
+        .select('user_id,subscription_status');
 
-      if (error) throw error;
+      if (subsError) throw subsError;
 
-      // Map the data to the User interface, handling the joined table
-      const mappedUsers: User[] = data.map((profile: any) => ({
-        id: profile.id,
-        email: profile.email,
-        company_name: profile.company_name,
-        subscription_tier: profile.subscription_tier,
-        trial_ends_at: profile.trial_ends_at,
-        subscription_status: profile.stripe_user_subscriptions ? profile.stripe_user_subscriptions.subscription_status : 'N/A',
-        created_at: profile.created_at,
-      }));
-      
+      // 3️⃣ Merge profiles + subscriptions
+      const mappedUsers: User[] = profilesData.map((profile: any) => {
+        const sub = subsData.find((s: any) => s.user_id === profile.id);
+        return {
+          id: profile.id,
+          email: profile.email,
+          company_name: profile.company_name,
+          subscription_tier: profile.subscription_tier,
+          trial_ends_at: profile.trial_ends_at,
+          subscription_status: sub?.subscription_status || 'N/A',
+          created_at: profile.created_at,
+        };
+      });
+
       setUsers(mappedUsers || []);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -67,9 +78,11 @@ export const Admin: React.FC = () => {
   };
 
   const totalUsers = users.length;
-  const activeSubscriptions = users.filter(u => u.subscription_tier === 'starter' || u.subscription_tier === 'growth' || u.subscription_tier === 'pro').length;
-  const trialUsers = users.filter(u => u.subscription_tier === 'trial').length;
-  const freeUsers = users.filter(u => u.subscription_tier === 'free').length;
+  const activeSubscriptions = users.filter(
+    (u) => u.subscription_tier === 'starter' || u.subscription_tier === 'growth' || u.subscription_tier === 'pro'
+  ).length;
+  const trialUsers = users.filter((u) => u.subscription_tier === 'trial').length;
+  const freeUsers = users.filter((u) => u.subscription_tier === 'free').length;
 
   if (loading) {
     return (
@@ -96,81 +109,41 @@ export const Admin: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mt-6">
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-8 w-8 text-cyan-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-300 truncate">
-                    Total Users
-                  </dt>
-                  <dd className="text-lg font-medium text-white">
-                    {totalUsers}
-                  </dd>
-                </dl>
-              </div>
+          <div className="p-5 flex items-center">
+            <Users className="h-8 w-8 text-cyan-400" />
+            <div className="ml-5">
+              <dt className="text-sm font-medium text-gray-300">Total Users</dt>
+              <dd className="text-lg font-medium text-white">{totalUsers}</dd>
             </div>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Building className="h-8 w-8 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-300 truncate">
-                    Paid Subscriptions
-                  </dt>
-                  <dd className="text-lg font-medium text-white">
-                    {activeSubscriptions}
-                  </dd>
-                </dl>
-              </div>
+          <div className="p-5 flex items-center">
+            <Building className="h-8 w-8 text-green-400" />
+            <div className="ml-5">
+              <dt className="text-sm font-medium text-gray-300">Paid Subscriptions</dt>
+              <dd className="text-lg font-medium text-white">{activeSubscriptions}</dd>
             </div>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-8 w-8 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-300 truncate">
-                    Trial Users
-                  </dt>
-                  <dd className="text-lg font-medium text-white">
-                    {trialUsers}
-                  </dd>
-                </dl>
-              </div>
+          <div className="p-5 flex items-center">
+            <Calendar className="h-8 w-8 text-yellow-400" />
+            <div className="ml-5">
+              <dt className="text-sm font-medium text-gray-300">Trial Users</dt>
+              <dd className="text-lg font-medium text-white">{trialUsers}</dd>
             </div>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg rounded-2xl">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Mail className="h-8 w-8 text-red-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-300 truncate">
-                    Free/Canceled Users
-                  </dt>
-                  <dd className="text-lg font-medium text-white">
-                    {freeUsers}
-                  </dd>
-                </dl>
-              </div>
+          <div className="p-5 flex items-center">
+            <Mail className="h-8 w-8 text-red-400" />
+            <div className="ml-5">
+              <dt className="text-sm font-medium text-gray-300">Free/Canceled Users</dt>
+              <dd className="text-lg font-medium text-white">{freeUsers}</dd>
             </div>
           </div>
         </div>
@@ -185,56 +158,34 @@ export const Admin: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-900/60">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Company
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Tier
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Stripe Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Trial Ends
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Joined
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Company</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tier</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stripe Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Trial Ends</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
               </tr>
             </thead>
             <tbody className="bg-transparent divide-y divide-gray-700">
               {users.map((user) => (
                 <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 text-gray-400 mr-2" />
-                      <div className="text-sm font-medium text-white">
-                        {user.email}
-                      </div>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap flex items-center">
+                    <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-sm font-medium text-white">{user.email}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {user.company_name || '-'}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{user.company_name || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_tier)}`}>
-                      {user.subscription_tier}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_tier || '')}`}>
+                      {user.subscription_tier || 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_status)}`}>
-                      {user.subscription_status}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.subscription_status || '')}`}>
+                      {user.subscription_status || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {user.trial_ends_at ? new Date(user.trial_ends_at).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{user.trial_ends_at ? new Date(user.trial_ends_at).toLocaleDateString() : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{new Date(user.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

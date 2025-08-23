@@ -2,33 +2,41 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
+// Initialize Stripe
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: { name: 'Bolt Integration', version: '1.0.0' },
 });
 
+// Initialize Supabase client with service role key
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Helper function to create responses with CORS headers
+// Helper for CORS-enabled responses
 function corsResponse(body: string | object | null, status = 200) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': '*',
   };
+
   if (status === 204) return new Response(null, { status, headers });
-  return new Response(JSON.stringify(body), { status, headers: { ...headers, 'Content-Type': 'application/json' } });
+
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+  });
 }
 
+// Edge function handler
 Deno.serve(async (req) => {
   try {
     if (req.method === 'OPTIONS') return corsResponse({}, 204);
     if (req.method !== 'POST') return corsResponse({ error: 'Method not allowed' }, 405);
 
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) return corsResponse({ error: 'Authorization header missing' }, 401);
 
     const token = authHeader.replace('Bearer ', '');
@@ -53,11 +61,11 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Customer not found or not linked to Stripe.' }, 404);
     }
 
-    // Create Stripe billing portal session
-    const returnUrl = req.headers.get('origin') ?? `${Deno.env.get('VITE_SUPABASE_URL')}/settings`;
+    // Use the request origin or fallback to environment URL
+    const origin = req.headers.get('origin') ?? Deno.env.get('VITE_SUPABASE_URL') ?? 'https://your-app-domain.com';
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customer.customer_id,
-      return_url: returnUrl,
+      return_url: `${origin}/settings`,
     });
 
     console.log(`Created billing portal session for user ${user.id}, customer ${customer.customer_id}`);

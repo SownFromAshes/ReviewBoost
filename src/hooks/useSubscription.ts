@@ -3,12 +3,30 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getProductByPriceId } from '../stripe-config';
 
+export interface Subscription {
+  customer_id: string;
+  user_id: string;
+  subscription_id: string | null;
+  price_id: string | null;
+  subscription_status: string;
+  current_period_start: number | null;
+  current_period_end: number | null;
+  cancel_at_period_end: boolean;
+  payment_method_brand: string | null;
+  payment_method_last4: string | null;
+  product_name?: string;
+  subscription_tier?: string;
+  trial_ends_at?: string | null;
+  is_active_subscription?: boolean;
+}
+
 export const useSubscription = () => {
   const { user, profile } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch subscription from Supabase
   const fetchSubscription = useCallback(async () => {
     if (!user || !profile) return;
 
@@ -68,21 +86,30 @@ export const useSubscription = () => {
   }, [fetchSubscription]);
 
   // --------------------------
-  // Real-time subscription to profile changes
+  // Real-time subscription to profile changes using Supabase v2 channels
   // --------------------------
   useEffect(() => {
     if (!user) return;
 
-    const subscriptionListener = supabase
-      .from(`profiles:id=eq.${user.id}`)
-      .on('UPDATE', payload => {
-        // Refetch subscription when profile changes
-        fetchSubscription();
-      })
+    const channel = supabase
+      .channel(`profile-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        payload => {
+          console.log('Profile updated', payload);
+          fetchSubscription(); // refetch subscription when profile updates
+        }
+      )
       .subscribe();
 
     return () => {
-      supabase.removeSubscription(subscriptionListener);
+      supabase.removeChannel(channel);
     };
   }, [user, fetchSubscription]);
 

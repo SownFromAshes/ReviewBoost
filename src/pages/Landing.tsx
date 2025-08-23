@@ -258,12 +258,11 @@ export const Landing: React.FC = () => {
             SMBs Are Already Seeing Results
           </h2>
           {/* Logos of beta testers (optional) */}
-          <div className="mt-8 flex flex-wrap justify-center items-center gap-8">
-            {/* Placeholder for logos */}
-            <img src="https://via.placeholder.com/100x40?text=Client+A" alt="Client A" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
-            <img src="https://via.placeholder.com/100x40?text=Client+B" alt="Client B" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
-            <img src="https://via.placeholder.com/100x40?text=Client+C" alt="Client C" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
-          </div>
+           <div className="mt-8 flex flex-wrap justify-center items-center gap-8">
+            <img src="https://via.placeholder.com/100x40?text=Client%20A" alt="Client A" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
+            <img src="https://via.placeholder.com/100x40?text=Client%20B" alt="Client B" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
+            <img src="https://via.placeholder.com/100x40?text=Client%20C" alt="Client C" className="h-10 opacity-70 grayscale hover:grayscale-0 transition" />
+           </div>
 
           {/* Mini case studies / metrics */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -282,34 +281,32 @@ export const Landing: React.FC = () => {
           </div>
 
           {/* Testimonials */}
-          <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg">
-              <p className="text-lg italic text-gray-300">
-                “ReviewBoost has been a game-changer for our small restaurant. We've seen a significant increase in Google reviews, and the dynamic QR codes mean we never have to worry about outdated links. Highly recommend!”
-              </p>
-              <div className="mt-4 flex items-center">
-                <img src="https://via.placeholder.com/40x40?text=JD" alt="John Doe" className="h-10 w-10 rounded-full mr-3" />
-                <div>
-                  <p className="font-semibold text-white">Jane Doe</p>
-                  <p className="text-sm text-gray-400">Owner, "The Daily Grind Cafe"</p>
-                </div>
-              </div>
+           <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+           <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg">
+            <p className="text-lg italic text-gray-300">
+             “ReviewBoost has been a game-changer for our small restaurant. We've seen a significant increase in Google reviews, and the dynamic QR codes mean we never have to worry about outdated links. Highly recommend!”
+            </p>
+            <div className="mt-4 flex items-center">
+             <img src="https://via.placeholder.com/40x40?text=JD" alt="John Doe" className="h-10 w-10 rounded-full mr-3" />
+             <div>
+              <p className="font-semibold text-white">Jane Doe</p>
+              <p className="text-sm text-gray-400">Owner, "The Daily Grind Cafe"</p>
+             </div>
             </div>
+           </div>
             <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-lg">
-              <p className="text-lg italic text-gray-300">
-                “The analytics feature is fantastic! We can see exactly when and where our QR codes are being scanned, helping us optimize our marketing efforts. Plus, the support team is incredibly responsive.”
-              </p>
+             <p className="text-lg italic text-gray-300">
+              “The analytics feature is fantastic! We can see exactly when and where our QR codes are being scanned, helping us optimize our marketing efforts. Plus, the support team is incredibly responsive.”
+             </p>
               <div className="mt-4 flex items-center">
-                <img src="https://via.placeholder.com/40x40?text=AS" alt="Alice Smith" className="h-10 w-10 rounded-full mr-3" />
-                <div>
-                  <p className="font-semibold text-white">Alex Smith</p>
-                  <p className="text-sm text-gray-400">Marketing Manager, "Urban Boutique"</p>
-                </div>
-              </div>
+               <img src="https://via.placeholder.com/40x40?text=AS" alt="Alice Smith" className="h-10 w-10 rounded-full mr-3" />
+              <div>
+              <p className="font-semibold text-white">Alex Smith</p>
+              <p className="text-sm text-gray-400">Marketing Manager, "Urban Boutique"</p>
+             </div>
             </div>
+           </div>
           </div>
-        </div>
-      </div>
 
       {/* Feature / Tier Section (Replicated from Pricing.tsx logic) */}
       <div id="pricing" className="bg-gray-950 py-16 sm:py-20 border-t border-gray-800">

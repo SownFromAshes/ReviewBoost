@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js';
-import { products } from '../stripe.config.ts'; // import product mapping
+import { products } from '../stripe.config.ts';
 
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
@@ -24,16 +24,25 @@ Deno.serve(async (req) => {
       event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message);
-      return new Response(`Webhook verification failed: ${err.message}`, { status: 400 });
+      return new Response(JSON.stringify({ error: `Webhook verification failed: ${err.message}` }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // process event asynchronously
-    EdgeRuntime.waitUntil(handleEvent(event));
+    // Fire-and-forget event handling
+    handleEvent(event).catch((err) => console.error('Error in handleEvent:', err));
 
-    return Response.json({ received: true });
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err: any) {
     console.error('Error processing webhook:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 });
 
@@ -75,11 +84,7 @@ async function handleEvent(event: Stripe.Event) {
 
 async function syncSubscription(customerId: string, userId: string) {
   try {
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      limit: 1,
-      status: 'all',
-    });
+    const subscriptions = await stripe.subscriptions.list({ customer: customerId, limit: 1, status: 'all' });
     const subscription = subscriptions.data[0];
 
     let subscriptionStatus = 'canceled';
@@ -92,14 +97,17 @@ async function syncSubscription(customerId: string, userId: string) {
       priceId = subscription.items.data[0]?.price?.id ?? null;
       trialEnd = subscription.trial_end;
 
-      // Map priceId to tier using stripe.config.ts
       const product = products.find((p) => p.priceId === priceId);
-      subscriptionTier = product?.name.toLowerCase() ?? 'free';
-      if (subscriptionStatus === 'trialing') subscriptionTier = 'trial';
-      if (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing') subscriptionTier = 'free';
+      if (subscriptionStatus === 'trialing') {
+        subscriptionTier = 'trial';
+      } else if (subscriptionStatus === 'active') {
+        subscriptionTier = product?.name.toLowerCase() ?? 'free';
+      } else {
+        subscriptionTier = 'free';
+      }
     }
 
-    // Upsert subscription in stripe_user_subscriptions table
+    // Upsert subscription
     await supabase.from('stripe_user_subscriptions').upsert({
       customer_id: customerId,
       user_id: userId,
@@ -109,7 +117,7 @@ async function syncSubscription(customerId: string, userId: string) {
       updated_at: new Date().toISOString(),
     }, { onConflict: ['customer_id'] });
 
-    // Update profiles table
+    // Update profile
     const profileUpdates: any = {
       subscription_tier: subscriptionTier,
       is_active_subscription: subscriptionStatus === 'active' || subscriptionStatus === 'trialing',

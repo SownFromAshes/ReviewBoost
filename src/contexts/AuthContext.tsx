@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Select all columns, including the new subscription fields
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -78,43 +79,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, companyName: string) => {
-    const { error, data: signUpData } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           company_name: companyName,
-          subscription_tier: 'trial',
-          is_active_subscription: true,
+          // New users start as 'trial' or 'free' based on your initial setup
+          // The webhook will update this accurately after checkout.session.completed
+          subscription_tier: 'trial', // Default new sign-ups to trial
+          is_active_subscription: true, // Active during trial
+          // trial_ends_at will be set by the webhook from Stripe's trial_end
         },
       },
     });
 
     if (error) throw error;
-
-    // After signup, fetch the new user ID
-    const userId = signUpData.user?.id;
-    if (!userId) return;
-
-    // Create a default subscription row in stripe_user_subscriptions
-    try {
-      await supabase
-        .from('stripe_user_subscriptions')
-        .insert({
-          user_id: userId,
-          subscription_status: 'trial',
-          subscription_id: null,
-          price_id: null,
-          customer_id: null,
-          updated_at: new Date().toISOString(),
-        });
-    } catch (err) {
-      console.error('Failed to create default subscription row:', err);
-    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (error) throw error;
   };
 

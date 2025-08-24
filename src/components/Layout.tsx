@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
-import { QrCode, Settings, Users, LogOut, BarChart3, Menu, X, DollarSign } from 'lucide-react';
+import { QrCode, Settings, Users, LogOut, BarChart3, Menu, X, DollarSign } from 'lucide-react'; // Import DollarSign icon
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,8 +20,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'QR Codes', href: '/qr-codes', icon: QrCode },
     { name: 'Settings', href: '/settings', icon: Settings },
-    { name: 'Pricing', href: '/pricing', icon: DollarSign },
+    { name: 'Pricing', href: '/pricing', icon: DollarSign }, // Added Pricing link
   ];
 
   if (profile?.email === 'admin@reviewboost.com') {

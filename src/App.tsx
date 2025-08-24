@@ -8,6 +8,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
+import { QRCodes } from './pages/QRCodes';
 import { Settings } from './pages/Settings';
 import { Admin } from './pages/Admin';
 import { RedirectPage } from './pages/RedirectPage';
@@ -38,6 +39,16 @@ function App() {
               }
             />
             <Route
+              path="/qr-codes"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <QRCodes />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute>
@@ -57,8 +68,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Redirect old QR codes route to dashboard */}
-            <Route path="/qr-codes" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster position="top-right" />
